@@ -631,18 +631,37 @@ void Builder::load_and_cache_map_textures()
 
 String Builder::texture_path(const char* name, const char* extension)
 {
+	// <ELIM> #safeSlashCheck
+	if (m_loader->m_texture_path.length() > 0) {
+		if (m_loader->m_texture_path[m_loader->m_texture_path.length()-1] == '/') {
+			return m_loader->m_texture_path + name + "." + extension;
+		}
+	}
+	// </ELIM>
 	return m_loader->m_texture_path + "/" + name + "." + extension;
 }
 
 String Builder::material_path(const char* name)
 {
-	auto root_path = m_loader->m_texture_path + "/" + name;
+	// <ELIM> #safeSlashCheck
+	// auto root_path = m_loader->m_texture_path + "/" + name;
+	String root_path = m_loader->m_texture_path;
+	if (root_path.length() > 0) {
+		if (root_path[root_path.length()-1] != '/') {
+			root_path += '/';
+		}
+	}
+	root_path += name;
+	// </ELIM>
+
 	String material_path;
 
-	if (FileAccess::file_exists(root_path + ".material")) {
+	if (ResourceLoader::get_singleton()->exists(root_path + ".material")) {
 		material_path = root_path + ".material";
-	} else if (FileAccess::file_exists(root_path + ".tres")) {
+		UtilityFunctions::print("Found .material for " + String(name));
+	} else if (ResourceLoader::get_singleton()->exists(root_path + ".tres")) {
 		material_path = root_path + ".tres";
+		UtilityFunctions::print("Found .tres for " + String(name));
 	}
 
 	return material_path;
@@ -662,8 +681,16 @@ Ref<Material> Builder::material_from_name(const char* name)
 
 	auto resource_loader = ResourceLoader::get_singleton();
 	if (!resource_loader->exists(path)) {
+		if (!path.is_empty()) {
+			UtilityFunctions::printerr("Path for ", String(name), " is not empty but ResourceLoader cannot locate it!");
+		}
 		return nullptr;
 	}
 
-	return resource_loader->load(path);
+	Ref<Material> mat = resource_loader->load(path);
+	if (mat == nullptr) {
+		UtilityFunctions::printerr("Valid material path for ", String(name), " yet ResourceLoader was unable to load it!");
+	}
+
+	return mat;
 }
