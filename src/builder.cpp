@@ -631,40 +631,21 @@ void Builder::load_and_cache_map_textures()
 
 String Builder::texture_path(const char* name, const char* extension)
 {
-	// <ELIM> #safeSlashCheck
-	if (m_loader->m_texture_path.length() > 0) {
-		if (m_loader->m_texture_path[m_loader->m_texture_path.length()-1] == '/') {
-			return m_loader->m_texture_path + name + "." + extension;
-		}
-	}
-	// </ELIM>
-	return m_loader->m_texture_path + "/" + name + "." + extension;
+	return m_loader->m_texture_path.path_join(String(name) + "." + extension);
 }
 
 String Builder::material_path(const char* name)
 {
-	// <ELIM> #safeSlashCheck
-	// auto root_path = m_loader->m_texture_path + "/" + name;
-	String root_path = m_loader->m_texture_path;
-	if (root_path.length() > 0) {
-		if (root_path[root_path.length()-1] != '/') {
-			root_path += '/';
-		}
-	}
-	root_path += name;
-	// </ELIM>
+	auto resource_loader = ResourceLoader::get_singleton();
+	auto root_path = m_loader->m_texture_path.path_join(name);
 
-	String material_path;
-
-	if (ResourceLoader::get_singleton()->exists(root_path + ".material")) {
-		material_path = root_path + ".material";
-		UtilityFunctions::print("Found .material for " + String(name));
-	} else if (ResourceLoader::get_singleton()->exists(root_path + ".tres")) {
-		material_path = root_path + ".tres";
-		UtilityFunctions::print("Found .tres for " + String(name));
+	if (resource_loader->exists(root_path + ".material")) {
+		return root_path + ".material";
+	} else if (resource_loader->exists(root_path + ".tres")) {
+		return root_path + ".tres";
 	}
 
-	return material_path;
+	return "";
 }
 
 Ref<Texture2D> Builder::texture_from_name(const char* name)
@@ -681,16 +662,8 @@ Ref<Material> Builder::material_from_name(const char* name)
 
 	auto resource_loader = ResourceLoader::get_singleton();
 	if (!resource_loader->exists(path)) {
-		if (!path.is_empty()) {
-			UtilityFunctions::printerr("Path for ", String(name), " is not empty but ResourceLoader cannot locate it!");
-		}
 		return nullptr;
 	}
 
-	Ref<Material> mat = resource_loader->load(path);
-	if (mat == nullptr) {
-		UtilityFunctions::printerr("Valid material path for ", String(name), " yet ResourceLoader was unable to load it!");
-	}
-
-	return mat;
+	return resource_loader->load(path);
 }
