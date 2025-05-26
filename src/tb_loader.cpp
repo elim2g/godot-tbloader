@@ -4,6 +4,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include <builder.h>
+#include <scoped_timer.h>
 
 void TBLoader::_bind_methods()
 {
@@ -269,6 +270,7 @@ void TBLoader::clear()
 
 void TBLoader::build_meshes()
 {
+	SCOPED_TIMER(BUILD_MESHES);
 	clear();
 
 	Builder builder(this);

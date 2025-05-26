@@ -12,6 +12,7 @@
 #include <godot_cpp/templates/vmap.hpp>
 
 #include <tb_loader.h>
+#include <scoped_timer.h>
 
 Builder::Builder(TBLoader* loader)
 {
@@ -25,6 +26,7 @@ Builder::~Builder()
 
 void Builder::load_map(const String& path)
 {
+	SCOPED_TIMER(LOAD_MAP);
 	UtilityFunctions::print("Building map ", path);
 
 	if (!FileAccess::file_exists(path)) {
@@ -35,9 +37,15 @@ void Builder::load_map(const String& path)
 	// Parse the map from the file
 	Ref<FileAccess> f = FileAccess::open(path, FileAccess::ModeFlags::READ);
 	LMMapParser parser(m_map);
-	parser.load_from_godot_file(f);
+	{
+		SCOPED_TIMER(PARSE_MAP);
+		parser.load_from_godot_file(f);
+	}
 
-	load_and_cache_map_textures();
+	{
+		SCOPED_TIMER(CACHE_TEXTURES);
+		load_and_cache_map_textures();
+	}
 
 	// We have to manually set the size of textures
 	for (int i = 0; i < m_map->texture_count; i++) {
@@ -55,12 +63,14 @@ void Builder::load_map(const String& path)
 	}
 
 	// Run geometry generator (this also generates UV's, so we do this last)
+	SCOPED_TIMER(GEOGEN);
 	LMGeoGenerator geogen(m_map);
 	geogen.run();
 }
 
 void Builder::build_map()
 {
+	SCOPED_TIMER(BUILD_MAP);
 	for (int i = 0; i < m_map->entity_count; i++) {
 		auto& ent = m_map->entities[i];
 		build_entity(i, ent, ent.get_property("classname"));
@@ -120,7 +130,11 @@ Node* Builder::build_entity(int idx, LMEntity& ent, const String& classname)
 				return nullptr;
 			}
 		}
-		newEntityNode = build_worldspawn(idx, ent, true);
+
+		{
+			SCOPED_TIMER(BUILD_WORLDSPAWN);
+			newEntityNode = build_worldspawn(idx, ent, true);
+		}
 
 	} else {
 		// Load common entities if enabled
