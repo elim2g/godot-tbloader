@@ -49,7 +49,7 @@ public:
 	Builder(TBLoader* loader);
 	~Builder();
 
-	void load_map(const String& path);
+	void load_map(const String& path, bool generate_geometry = true);
 	void build_map();
 
 	Node* build_worldspawn(int idx, LMEntity& ent, bool collision);

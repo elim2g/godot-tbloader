@@ -86,6 +86,7 @@ public:
 	Ref<Material> get_material_template();
 	void set_material_texture_path(const String& texture_path);
 	String get_material_texture_path();
+	PackedStringArray get_texture_list();
 
 	void clear();
 	void build_meshes();

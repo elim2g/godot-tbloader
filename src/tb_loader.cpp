@@ -46,6 +46,7 @@ void TBLoader::_bind_methods()
 	ClassDB::bind_method(D_METHOD("get_material_template"), &TBLoader::get_material_template);
 	ClassDB::bind_method(D_METHOD("set_material_texture_path", "texture_path"), &TBLoader::set_material_texture_path);
 	ClassDB::bind_method(D_METHOD("get_material_texture_path"), &TBLoader::get_material_texture_path);
+	ClassDB::bind_method(D_METHOD("get_texture_list"), &TBLoader::get_texture_list);
 
 	ClassDB::bind_method(D_METHOD("clear"), &TBLoader::clear);
 	ClassDB::bind_method(D_METHOD("build_meshes"), &TBLoader::build_meshes);
@@ -257,6 +258,27 @@ void TBLoader::set_material_texture_path(const String& texture_path)
 String TBLoader::get_material_texture_path()
 {
 	return m_material_texture_path;
+}
+
+PackedStringArray TBLoader::get_texture_list()
+{
+	Builder builder(this);
+	builder.load_map(m_map_path, false);
+
+	if (!builder.m_map)
+	{
+		return PackedStringArray();
+	}
+
+	PackedStringArray texture_list;
+	texture_list.resize(builder.m_map->texture_count);
+	for (int i = 0; i < builder.m_map->texture_count; ++i)
+	{
+		const LMTextureData& tex = builder.m_map->textures[i];
+		texture_list[i] = String(tex.name);
+	}
+
+	return texture_list;
 }
 
 void TBLoader::clear()

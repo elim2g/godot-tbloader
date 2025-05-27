@@ -24,7 +24,7 @@ Builder::~Builder()
 {
 }
 
-void Builder::load_map(const String& path)
+void Builder::load_map(const String& path, bool generate_geometry)
 {
 	SCOPED_TIMER(LOAD_MAP);
 	UtilityFunctions::print("Building map ", path);
@@ -63,9 +63,12 @@ void Builder::load_map(const String& path)
 	}
 
 	// Run geometry generator (this also generates UV's, so we do this last)
-	SCOPED_TIMER(GEOGEN);
-	LMGeoGenerator geogen(m_map);
-	geogen.run();
+	if (generate_geometry)
+	{
+		SCOPED_TIMER(GEOGEN);
+		LMGeoGenerator geogen(m_map);
+		geogen.run();
+	}
 }
 
 void Builder::build_map()
