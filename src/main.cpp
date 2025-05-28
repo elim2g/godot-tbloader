@@ -4,6 +4,7 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include <tb_loader.h>
+#include <material_slot_map.h>
 
 using namespace godot;
 
@@ -13,6 +14,7 @@ void register_tbloader_types(ModuleInitializationLevel p_level)
 		return;
 	}
 	ClassDB::register_class<TBLoader>();
+	ClassDB::register_class<MaterialSlotMap>();
 }
 
 void unregister_tbloader_types(ModuleInitializationLevel p_level)

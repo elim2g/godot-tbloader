@@ -13,6 +13,7 @@
 
 #include <tb_loader.h>
 #include <scoped_timer.h>
+#include <material_slot_map.h>
 
 Builder::Builder(TBLoader* loader)
 {
@@ -479,8 +480,10 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	String instance_name = String("entity_{0}_geometry").format(Array::make(idx));
 
 	auto mesh_instance = memnew(MeshInstance3D());
+	auto material_slot_map = memnew(MaterialSlotMap());
 
 	parent->add_child(mesh_instance);
+	mesh_instance->add_child(material_slot_map);
 
 	// Set the layers that the mesh instance will be rendered in
 	mesh_instance->set_layer_mask(m_loader->get_visual_layer_mask());
