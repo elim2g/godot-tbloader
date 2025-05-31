@@ -24,4 +24,5 @@ public:
 
 public:
     int64_t get_slot_index_for_name(const String& in_name) const;
+    void add_slot(const String& in_name);
 };

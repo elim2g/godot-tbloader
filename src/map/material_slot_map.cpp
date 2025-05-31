@@ -27,3 +27,8 @@ int64_t MaterialSlotMap::get_slot_index_for_name(const String& in_name) const
 
     return -1;
 }
+
+void MaterialSlotMap::add_slot(const String& in_name)
+{
+    material_slots.append(in_name);
+}

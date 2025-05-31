@@ -483,12 +483,12 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	auto material_slot_map = memnew(MaterialSlotMap());
 
 	parent->add_child(mesh_instance);
-	mesh_instance->add_child(material_slot_map);
 
 	// Set the layers that the mesh instance will be rendered in
 	mesh_instance->set_layer_mask(m_loader->get_visual_layer_mask());
 	mesh_instance->set_owner(m_loader->get_owner());
 	mesh_instance->set_name(instance_name);
+	mesh_instance->add_child(material_slot_map);
 
 	// Create mesh
 	Ref<ArrayMesh> mesh = memnew(ArrayMesh());
@@ -569,6 +569,7 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 
 			// Skip if the texture specifies that we only want collision (invisible walls)
 			if (tex.name == m_loader->get_clip_texture_name()) {
+				material_slot_map->add_slot("");
 				continue;
 			}
 
@@ -579,6 +580,8 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 			if (material != nullptr) {
 				mesh->surface_set_material(mesh->get_surface_count() - 1, material);
 			}
+			// Map the surface index to the texture name so it can be changed programmatically at runtime
+			material_slot_map->add_slot(tex.name);
 		}
 	}
 
