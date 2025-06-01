@@ -6,6 +6,7 @@
 #include <godot_cpp/core/defs.hpp>
 
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 
 using namespace godot;
 
@@ -21,8 +22,9 @@ protected:
 
 public:
     PackedStringArray get_material_slots() const;
+    int64_t get_slot_index_for_name(const String& in_name) const;
+    void replace_material_from_tex_name(const String& in_name, Ref<Material> in_material);
 
 public:
-    int64_t get_slot_index_for_name(const String& in_name) const;
     void add_slot(const String& in_name);
 };
