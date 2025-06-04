@@ -569,7 +569,6 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 
 			// Skip if the texture specifies that we only want collision (invisible walls)
 			if (tex.name == m_loader->get_clip_texture_name()) {
-				material_slot_map->add_slot("");
 				continue;
 			}
 
@@ -577,10 +576,12 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 			add_surface_to_mesh(mesh, surf);
 
 			// Give mesh material
+			const uint64_t surf_idx = mesh->get_surface_count()-1;
 			if (material != nullptr) {
-				mesh->surface_set_material(mesh->get_surface_count() - 1, material);
+				mesh->surface_set_material(surf_idx, material);
 			}
 			// Map the surface index to the texture name so it can be changed programmatically at runtime
+			mesh->surface_set_name(surf_idx, tex.name);
 			material_slot_map->add_slot(tex.name);
 		}
 	}
