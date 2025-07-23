@@ -10,6 +10,7 @@
 #include <godot_cpp/classes/convex_polygon_shape3d.hpp>
 #include <godot_cpp/classes/concave_polygon_shape3d.hpp>
 #include <godot_cpp/templates/vmap.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 
 #include <tb_loader.h>
 #include <scoped_timer.h>
@@ -501,6 +502,87 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	auto material_template = m_loader->get_material_template();
 	bool has_material_template = material_template.is_valid();
 	VMap<String, Ref<Material>> material_template_map;
+
+	// <WIP>
+	// LMSurfaceGatherer surf_gather(m_map);
+	// surf_gather.surface_gatherer_set_entity_index_filter(idx);
+	// surf_gather.surface_gatherer_run();
+
+	// auto& surfs = surf_gather.out_surfaces;
+
+	// HashMap<String, Vector<LMsurface>> surfaces_by_texture;	
+	// for (int i = 0; i < surfs.surface_count; ++i)
+	// {
+	// 	auto& surf = surfs.surfaces[i];
+	// 	if (surf.vertex_count == 0)
+	// 	{
+	// 		continue;
+	// 	}
+
+	// 	surfaces_by_texture[surf.texture_name].push_back(surf);
+	// }
+
+	// for (auto& key_value : surfaces_by_texture)
+	// {
+	// 	const String& tex_name = key_value.key;
+	// 	const Vector<LMSurface>& surfaces = key_value.value;
+
+	// 	if (tex_name = m_loader->get_skip_texture_name())
+	// 	{
+	// 		continue;
+	// 	}
+
+	// 	Ref<Material> material = material_from_name(tex_name);
+	// 	if  (material == nullptr)
+	// 	{
+	// 		auto res_texture = texture_from_name(tex_name);
+	// 		if (res_texture.is_valid())
+	// 		{
+	// 			if (has_material_template)
+	// 			{
+	// 				if (!material_template_map.has(tex_name))
+	// 				{
+	// 					auto material_copy = material_template->duplicate();
+	// 					material_copy->set(m_loader->get_material_texture_path(), res_texture);
+	// 					material_template_map.insert(tex_name, material_copy);
+	// 				}
+
+	// 				material = material_template_map[tex_name];
+	// 			}
+	// 			else
+	// 			{
+	// 				Ref<StandardMaterial3D> default_material = memnew(StandardMaterial3D());
+	// 				default_material->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, res_texture);
+	// 				if (m_loader->m_filter_nearest)
+	// 				{
+	// 					default_material->set_texture_filter(BaseMaterial3D::TEXTURE_FILTER_NEAREST);
+	// 				}
+
+	// 				material = default_material;
+	// 			}
+	// 		}
+	// 	}
+
+	// 	for (const LMSurface& surf : surfaces)
+	// 	{
+	// 		add_surface_to_mesh(collision_mesh, surf);
+
+	// 		if (tex_name == m_loader->get_clip_texture_name())
+	// 		{
+	// 			continue;
+	// 		}
+
+	// 		add_surface_to_mesh(mesh, surf);
+	// 		uint64_t surf_idx = mesh->get_surface_count() -1;
+
+	// 		if (material.is_valid())
+	// 		{
+	// 			mesh->surface_set_material(surf_idx, material);
+	// 			material_slot_map->add_slot(tex_name);
+	// 		}
+	// 	}
+	// }
+	// </WIP>
 
 	for (int i = 0; i < m_map->texture_count; i++) {
 		LMTextureData tex = m_map->textures[i];
