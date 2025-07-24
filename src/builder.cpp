@@ -477,6 +477,7 @@ void Builder::add_surface_to_mesh(Ref<ArrayMesh>& mesh, LMSurface& surf)
 
 MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* parent, ColliderType coltype, ColliderShape colshape)
 {
+	SCOPED_TIMER(BUILD_ENTITY_MESH);
 	// Create instance name based on entity idx
 	String instance_name = String("entity_{0}_geometry").format(Array::make(idx));
 
@@ -510,7 +511,7 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 
 	// auto& surfs = surf_gather.out_surfaces;
 
-	// HashMap<String, Vector<LMsurface>> surfaces_by_texture;	
+	// HashMap<int, Vector<LMSurface*>> surfaces_by_texid;	
 	// for (int i = 0; i < surfs.surface_count; ++i)
 	// {
 	// 	auto& surf = surfs.surfaces[i];
@@ -519,15 +520,16 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	// 		continue;
 	// 	}
 
-	// 	surfaces_by_texture[surf.texture_name].push_back(surf);
+	// 	surfaces_by_texid[surf.texture_index].push_back(&surf);
 	// }
 
-	// for (auto& key_value : surfaces_by_texture)
+	// for (auto& key_value : surfaces_by_texid)
 	// {
-	// 	const String& tex_name = key_value.key;
-	// 	const Vector<LMSurface>& surfaces = key_value.value;
+	// 	const int tex_id = key_value.key;
+	// 	const char* tex_name = m_map->textures[tex_id].name;
+	// 	Vector<LMSurface*>& surfaces = key_value.value;
 
-	// 	if (tex_name = m_loader->get_skip_texture_name())
+	// 	if (tex_name == m_loader->get_skip_texture_name())
 	// 	{
 	// 		continue;
 	// 	}
@@ -563,16 +565,16 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	// 		}
 	// 	}
 
-	// 	for (const LMSurface& surf : surfaces)
+	// 	for (LMSurface* surf : surfaces)
 	// 	{
-	// 		add_surface_to_mesh(collision_mesh, surf);
+	// 		add_surface_to_mesh(collision_mesh, *surf);
 
 	// 		if (tex_name == m_loader->get_clip_texture_name())
 	// 		{
 	// 			continue;
 	// 		}
 
-	// 		add_surface_to_mesh(mesh, surf);
+	// 		add_surface_to_mesh(mesh, *surf);
 	// 		uint64_t surf_idx = mesh->get_surface_count() -1;
 
 	// 		if (material.is_valid())
@@ -633,7 +635,10 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 		LMSurfaceGatherer surf_gather(m_map);
 		surf_gather.surface_gatherer_set_entity_index_filter(idx);
 		surf_gather.surface_gatherer_set_texture_filter(tex.name);
-		surf_gather.surface_gatherer_run();
+		{
+			SCOPED_TIMER(SURFACE_GATHERER_RUN);
+			surf_gather.surface_gatherer_run();
+		}
 
 		auto& surfs = surf_gather.out_surfaces;
 		if (surfs.surface_count == 0) {

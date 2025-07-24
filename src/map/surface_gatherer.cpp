@@ -175,23 +175,49 @@ void LMSurfaceGatherer::surface_gatherer_run() {
 					continue;
 				}
 
-				for (int v = 0; v < face_geo_inst->vertex_count; ++v) {
+				// <ELIM> Store texture index
+				surf_inst->texture_index = brush_inst->faces[f].texture_idx;
+				// </ELIM>
+
+				// <ELIM> Perform realloc ONCE instead of EVERY ITERATION (r0fL)
+				// for (int v = 0; v < face_geo_inst->vertex_count; ++v) {
+				// 	LMFaceVertex vertex = face_geo_inst->vertices[v];
+
+				// 	if (entity_inst->spawn_type == EST_ENTITY || entity_inst->spawn_type == EST_GROUP) {
+				// 		vertex.vertex = vec3_sub(vertex.vertex, entity_inst->center);
+				// 	}
+
+				// 	surf_inst->vertices = (LMFaceVertex *)realloc(surf_inst->vertices, (surf_inst->vertex_count + 1) * sizeof(LMFaceVertex));
+				// 	surf_inst->vertices[surf_inst->vertex_count] = vertex;
+				// 	surf_inst->vertex_count++;
+				// }
+
+				// for (int i = 0; i < (face_geo_inst->vertex_count - 2) * 3; ++i) {
+				// 	surf_inst->indices = (int *)realloc(surf_inst->indices, (surf_inst->index_count + 1) * sizeof(int));
+				// 	surf_inst->indices[surf_inst->index_count] = face_geo_inst->indices[i] + index_offset;
+				// 	surf_inst->index_count++;
+				// }
+
+				surf_inst->vertices = (LMFaceVertex*)realloc(surf_inst->vertices, (surf_inst->vertex_count + face_geo_inst->vertex_count) * sizeof(LMFaceVertex));
+				for (int v = 0; v < face_geo_inst->vertex_count; ++v)
+				{
 					LMFaceVertex vertex = face_geo_inst->vertices[v];
 
 					if (entity_inst->spawn_type == EST_ENTITY || entity_inst->spawn_type == EST_GROUP) {
 						vertex.vertex = vec3_sub(vertex.vertex, entity_inst->center);
 					}
 
-					surf_inst->vertices = (LMFaceVertex *)realloc(surf_inst->vertices, (surf_inst->vertex_count + 1) * sizeof(LMFaceVertex));
 					surf_inst->vertices[surf_inst->vertex_count] = vertex;
 					surf_inst->vertex_count++;
 				}
 
-				for (int i = 0; i < (face_geo_inst->vertex_count - 2) * 3; ++i) {
-					surf_inst->indices = (int *)realloc(surf_inst->indices, (surf_inst->index_count + 1) * sizeof(int));
+				surf_inst->indices = (int*)realloc(surf_inst->indices, (surf_inst->index_count + ((face_geo_inst->vertex_count - 2) * 3)) * sizeof(int));
+				for (int i = 0; i < (face_geo_inst->vertex_count - 2) * 3; ++i)
+				{
 					surf_inst->indices[surf_inst->index_count] = face_geo_inst->indices[i] + index_offset;
 					surf_inst->index_count++;
 				}
+				// </ELIM>
 
 				index_offset += face_geo_inst->vertex_count;
 			}

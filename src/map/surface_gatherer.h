@@ -10,6 +10,9 @@
 #include <memory>
 
 typedef struct LMSurface {
+	// <ELIM> Store texture index
+	int texture_index = -1;
+	// </ELIM>
 	int vertex_count = 0;
 	LMFaceVertex *vertices = NULL;
 	int index_count = 0;
