@@ -24,6 +24,9 @@ typedef struct LMFaceVertex {
 } LMFaceVertex;
 
 typedef struct LMFaceGeometry {
+	// <ELIM> Track vertex buffer length
+	int vert_buf_len = 0;
+	// </ELIM>
 	int vertex_count = 0;
 	LMFaceVertex *vertices = NULL;
 	int index_count = 0;

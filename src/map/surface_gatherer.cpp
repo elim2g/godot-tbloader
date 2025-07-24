@@ -155,6 +155,32 @@ void LMSurfaceGatherer::surface_gatherer_run() {
 			}
 		}
 
+		// <ELIM> Reduce reallocations inside the loop by using same method as vectors
+		// Find the lowest power-of-2 (starting from 16) which is higher than the current vertex count
+		int vert_arr_len = 16;
+		int ind_arr_len = 64;
+		for (int i = vert_arr_len; ; i *= 2)
+		{
+			if (i > surf_inst->vertex_count)
+			{
+				surf_inst->vertices = (LMFaceVertex*)realloc(surf_inst->vertices, i * sizeof(LMFaceVertex));
+				vert_arr_len = i;
+
+				break;
+			}
+		}
+		for (int i = ind_arr_len; ; i *= 2)
+		{
+			if (i > surf_inst->index_count)
+			{
+				surf_inst->indices = (int*)realloc(surf_inst->indices, i * sizeof(int));
+				ind_arr_len = i;
+
+				break;
+			}
+		}
+		// </ELIM>
+
 		for (int b = 0; b < entity_inst->brush_count; ++b) {
 			LMBrush *brush_inst = &entity_inst->brushes[b];
 			LMBrushGeometry *brush_geo_inst = &entity_geo_inst->brushes[b];
@@ -175,10 +201,6 @@ void LMSurfaceGatherer::surface_gatherer_run() {
 					continue;
 				}
 
-				// <ELIM> Store texture index
-				surf_inst->texture_index = brush_inst->faces[f].texture_idx;
-				// </ELIM>
-
 				// <ELIM> Perform realloc ONCE instead of EVERY ITERATION (r0fL)
 				// for (int v = 0; v < face_geo_inst->vertex_count; ++v) {
 				// 	LMFaceVertex vertex = face_geo_inst->vertices[v];
@@ -198,7 +220,17 @@ void LMSurfaceGatherer::surface_gatherer_run() {
 				// 	surf_inst->index_count++;
 				// }
 
-				surf_inst->vertices = (LMFaceVertex*)realloc(surf_inst->vertices, (surf_inst->vertex_count + face_geo_inst->vertex_count) * sizeof(LMFaceVertex));
+				// Only perform realloc if we would exceed the current buffer
+				int new_vert_count = surf_inst->vertex_count + face_geo_inst->vertex_count;
+				if (new_vert_count > vert_arr_len)
+				{
+					while (vert_arr_len < new_vert_count)
+					{
+						vert_arr_len *= 2;
+					}
+					surf_inst->vertices = (LMFaceVertex*)realloc(surf_inst->vertices, vert_arr_len * sizeof(LMFaceVertex));
+				}
+
 				for (int v = 0; v < face_geo_inst->vertex_count; ++v)
 				{
 					LMFaceVertex vertex = face_geo_inst->vertices[v];
@@ -211,7 +243,17 @@ void LMSurfaceGatherer::surface_gatherer_run() {
 					surf_inst->vertex_count++;
 				}
 
-				surf_inst->indices = (int*)realloc(surf_inst->indices, (surf_inst->index_count + ((face_geo_inst->vertex_count - 2) * 3)) * sizeof(int));
+				// Same deal with index buffer, only re-alloc if we will exceed the current length
+				int new_index_count = surf_inst->index_count + ((face_geo_inst->vertex_count - 2) * 3);
+				if (new_index_count > ind_arr_len)
+				{
+					while (ind_arr_len < new_index_count)
+					{
+						ind_arr_len *= 2;
+					}
+					surf_inst->indices = (int*)realloc(surf_inst->indices, ind_arr_len * sizeof(int));
+				}
+
 				for (int i = 0; i < (face_geo_inst->vertex_count - 2) * 3; ++i)
 				{
 					surf_inst->indices[surf_inst->index_count] = face_geo_inst->indices[i] + index_offset;

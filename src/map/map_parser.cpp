@@ -134,7 +134,7 @@ void LMMapParser::load_from_godot_file(godot::Ref<godot::FileAccess> f) {
 	//     c = (int)f->get_8();
 
 	const godot::PackedByteArray file_bytes = f->get_buffer(f->get_length());
-	for (const char& byte : file_bytes) {
+	for (const char byte : file_bytes) {
 		c = (int)byte;
 
 	// </ELIM>

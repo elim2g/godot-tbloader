@@ -477,7 +477,6 @@ void Builder::add_surface_to_mesh(Ref<ArrayMesh>& mesh, LMSurface& surf)
 
 MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* parent, ColliderType coltype, ColliderShape colshape)
 {
-	SCOPED_TIMER(BUILD_ENTITY_MESH);
 	// Create instance name based on entity idx
 	String instance_name = String("entity_{0}_geometry").format(Array::make(idx));
 
@@ -503,88 +502,6 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	auto material_template = m_loader->get_material_template();
 	bool has_material_template = material_template.is_valid();
 	VMap<String, Ref<Material>> material_template_map;
-
-	// <WIP>
-	// LMSurfaceGatherer surf_gather(m_map);
-	// surf_gather.surface_gatherer_set_entity_index_filter(idx);
-	// surf_gather.surface_gatherer_run();
-
-	// auto& surfs = surf_gather.out_surfaces;
-
-	// HashMap<int, Vector<LMSurface*>> surfaces_by_texid;	
-	// for (int i = 0; i < surfs.surface_count; ++i)
-	// {
-	// 	auto& surf = surfs.surfaces[i];
-	// 	if (surf.vertex_count == 0)
-	// 	{
-	// 		continue;
-	// 	}
-
-	// 	surfaces_by_texid[surf.texture_index].push_back(&surf);
-	// }
-
-	// for (auto& key_value : surfaces_by_texid)
-	// {
-	// 	const int tex_id = key_value.key;
-	// 	const char* tex_name = m_map->textures[tex_id].name;
-	// 	Vector<LMSurface*>& surfaces = key_value.value;
-
-	// 	if (tex_name == m_loader->get_skip_texture_name())
-	// 	{
-	// 		continue;
-	// 	}
-
-	// 	Ref<Material> material = material_from_name(tex_name);
-	// 	if  (material == nullptr)
-	// 	{
-	// 		auto res_texture = texture_from_name(tex_name);
-	// 		if (res_texture.is_valid())
-	// 		{
-	// 			if (has_material_template)
-	// 			{
-	// 				if (!material_template_map.has(tex_name))
-	// 				{
-	// 					auto material_copy = material_template->duplicate();
-	// 					material_copy->set(m_loader->get_material_texture_path(), res_texture);
-	// 					material_template_map.insert(tex_name, material_copy);
-	// 				}
-
-	// 				material = material_template_map[tex_name];
-	// 			}
-	// 			else
-	// 			{
-	// 				Ref<StandardMaterial3D> default_material = memnew(StandardMaterial3D());
-	// 				default_material->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, res_texture);
-	// 				if (m_loader->m_filter_nearest)
-	// 				{
-	// 					default_material->set_texture_filter(BaseMaterial3D::TEXTURE_FILTER_NEAREST);
-	// 				}
-
-	// 				material = default_material;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	for (LMSurface* surf : surfaces)
-	// 	{
-	// 		add_surface_to_mesh(collision_mesh, *surf);
-
-	// 		if (tex_name == m_loader->get_clip_texture_name())
-	// 		{
-	// 			continue;
-	// 		}
-
-	// 		add_surface_to_mesh(mesh, *surf);
-	// 		uint64_t surf_idx = mesh->get_surface_count() -1;
-
-	// 		if (material.is_valid())
-	// 		{
-	// 			mesh->surface_set_material(surf_idx, material);
-	// 			material_slot_map->add_slot(tex_name);
-	// 		}
-	// 	}
-	// }
-	// </WIP>
 
 	for (int i = 0; i < m_map->texture_count; i++) {
 		LMTextureData tex = m_map->textures[i];
@@ -635,10 +552,7 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 		LMSurfaceGatherer surf_gather(m_map);
 		surf_gather.surface_gatherer_set_entity_index_filter(idx);
 		surf_gather.surface_gatherer_set_texture_filter(tex.name);
-		{
-			SCOPED_TIMER(SURFACE_GATHERER_RUN);
-			surf_gather.surface_gatherer_run();
-		}
+		surf_gather.surface_gatherer_run();
 
 		auto& surfs = surf_gather.out_surfaces;
 		if (surfs.surface_count == 0) {

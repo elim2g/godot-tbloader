@@ -248,7 +248,14 @@ void LMGeoGenerator::generate_brush_vertices(int entity_idx, int brush_idx) {
 
 						if (unique_vertex) {
 							face_geo_inst->vertex_count++;
-							face_geo_inst->vertices = (LMFaceVertex *)realloc(face_geo_inst->vertices, face_geo_inst->vertex_count * sizeof(LMFaceVertex));
+							// <ELIM> Double vertex buffer length if we are going to exceed the current capacity
+							// face_geo_inst->vertices = (LMFaceVertex *)realloc(face_geo_inst->vertices, face_geo_inst->vertex_count * sizeof(LMFaceVertex));
+							if (face_geo_inst->vertex_count > face_geo_inst->vert_buf_len)
+							{
+								face_geo_inst->vert_buf_len = (face_geo_inst->vert_buf_len < 4) ? 4 : (face_geo_inst->vert_buf_len * 2);
+								face_geo_inst->vertices = (LMFaceVertex *)realloc(face_geo_inst->vertices, face_geo_inst->vert_buf_len * sizeof(LMFaceVertex));
+							}
+							// </ELIM>
 							face_geo_inst->vertices[face_geo_inst->vertex_count - 1] = { vertex, normal, uv, tangent };
 						} else if (phong) {
 							face_geo_inst->vertices[duplicate_index].normal = vec3_add(face_geo_inst->vertices[duplicate_index].normal, normal);
