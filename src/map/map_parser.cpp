@@ -129,9 +129,15 @@ void LMMapParser::load_from_godot_file(godot::Ref<godot::FileAccess> f) {
 	char buf[255];
 	int buf_head = 0;
 	bool is_quoted = false;
-	while (!f->eof_reached()) {
-		c = (int)f->get_8();
+	// <ELIM> Read entire file into memory instead of pulling one byte at a time lol
+	// while (!f->eof_reached()) {
+	//     c = (int)f->get_8();
 
+	const godot::PackedByteArray file_bytes = f->get_buffer(f->get_length());
+	for (const char& byte : file_bytes) {
+		c = (int)byte;
+
+	// </ELIM>
 		if (c == '\n') {
 			buf[buf_head] = '\0';
 			token(buf);
