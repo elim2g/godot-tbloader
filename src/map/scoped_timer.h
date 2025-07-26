@@ -11,7 +11,7 @@ namespace turnt
 
 struct ScopeMarker
 {
-    godot::String name;
+    const char* name;
     uint64_t start_time;
     uint64_t end_time;
     uint64_t depth;
@@ -20,7 +20,7 @@ struct ScopeMarker
 class ScopedTimer
 {
 public:
-    ScopedTimer(godot::String in_scope_name);
+    ScopedTimer(const char* in_scope_name);
     ~ScopedTimer();
 
 private:

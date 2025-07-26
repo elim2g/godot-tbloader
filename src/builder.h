@@ -2,6 +2,7 @@
 
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/texture2d.hpp>
@@ -43,7 +44,7 @@ class Builder
 public:
 	TBLoader* m_loader;
 	std::shared_ptr<LMMapData> m_map;
-	Dictionary m_loaded_map_textures; // Texture Name(const char*) - Ref<Texture2D>
+	HashMap<const char*, Ref<Texture2D>> m_loaded_map_textures; // Texture Name(const char*) - Ref<Texture2D>
 
 public:
 	Builder(TBLoader* loader);

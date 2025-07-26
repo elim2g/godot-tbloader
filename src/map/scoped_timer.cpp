@@ -8,7 +8,7 @@ using namespace turnt;
 /*static*/ uint64_t ScopedTimer::stack_depth = 0;
 /*static*/ godot::Vector<ScopeMarker*> ScopedTimer::scope_markers;
 
-ScopedTimer::ScopedTimer(godot::String in_scope_name)
+ScopedTimer::ScopedTimer(const char* in_scope_name)
 {
     _marker = new ScopeMarker 
     { 
@@ -28,17 +28,17 @@ ScopedTimer::~ScopedTimer()
 
     if (unlikely(ScopedTimer::stack_depth <= 0))
     {
-        godot::String output("----------\n");
+        // Print the scoped timings
+        godot::UtilityFunctions::print("----------");
         for (const ScopeMarker* sm : ScopedTimer::scope_markers)
         {
-            output += godot::String("-").repeat(sm->depth);
-            output += godot::String("[" + sm->name + "] ");
-            output += godot::String::num_uint64(sm->end_time - sm->start_time) + "ms";
-            output += '\n';
+            godot::UtilityFunctions::print(
+                  godot::String("-").repeat(sm->depth)
+                + godot::String("[" + godot::String(sm->name) + "] ")
+                + godot::String::num_uint64(sm->end_time - sm->start_time) + "ms"
+            );
         }
-        output += "----------";
-
-        godot::UtilityFunctions::print(output);
+        godot::UtilityFunctions::print("----------");
 
         for (ScopeMarker* sm : ScopedTimer::scope_markers)
         {

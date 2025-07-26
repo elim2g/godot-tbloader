@@ -144,7 +144,50 @@ void LMGeoGenerator::run() {
 				wind_face_center = vec3_div_double(wind_face_center, face_geo_inst->vertex_count);
 
 				sort_map_data = map_data.get();
-				qsort(face_geo_inst->vertices, face_geo_inst->vertex_count, sizeof(LMFaceVertex), sort_vertices_by_winding);
+				// <ELIM> Insertion sort outpaces qsort for small-N
+				// qsort(face_geo_inst->vertices, face_geo_inst->vertex_count, sizeof(LMFaceVertex), sort_vertices_by_winding);
+				LMFaceVertex* vertices = face_geo_inst->vertices;
+				const int vertex_count = face_geo_inst->vertex_count;
+
+				vec3 u = vec3_normalize(wind_face_basis);
+				vec3 v = vec3_normalize(vec3_cross(u, wind_face_normal));
+
+				for (int i = 1; i < vertex_count; ++i) {
+					LMFaceVertex key = vertices[i];
+					int j = i - 1;
+
+					while (j >= 0) {
+						const vec3 *lhs = &vertices[j].vertex;
+						const vec3 *rhs = &key.vertex;
+
+						vec3 local_lhs = vec3_sub(*lhs, wind_face_center);
+						double lhs_pu = vec3_dot(local_lhs, u);
+						double lhs_pv = vec3_dot(local_lhs, v);
+						// <ELIM> FUCK atan2 expensive ass shit
+						// double lhs_angle = atan2(lhs_pv, lhs_pu);
+
+						vec3 local_rhs = vec3_sub(*rhs, wind_face_center);
+						double rhs_pu = vec3_dot(local_rhs, u);
+						double rhs_pv = vec3_dot(local_rhs, v);
+						// double rhs_angle = atan2(rhs_pv, rhs_pu);
+
+						double orientation = (lhs_pu * rhs_pv - lhs_pv * rhs_pu);
+
+						// if (lhs_angle <= rhs_angle) {
+						// 	break;
+						// }
+						if (orientation > 0)
+						{
+							break;
+						}
+						// </ELIM>
+
+						vertices[j + 1] = vertices[j];
+						j--;
+					}
+					vertices[j + 1] = key;
+				}
+				// </ELIM>
 
 				wind_entity_idx = 0;
 			}
@@ -180,24 +223,52 @@ void LMGeoGenerator::run() {
 void LMGeoGenerator::generate_brush_vertices(int entity_idx, int brush_idx) {
 	LMEntity *ent_inst = &map_data->entities[entity_idx];
 	LMBrush *brush_inst = &ent_inst->brushes[brush_idx];
+	// <ELIM> Redundant lookup for reused values
+	const char* phong_property = map_data->map_data_get_entity_property(entity_idx, "_phong");
+	const bool phong = phong_property != NULL && strcmp(phong_property, "1") == 0;
+	const char* phong_angle_property = (phong) ? map_data->map_data_get_entity_property(entity_idx, "_phong_angle") : NULL;
+	const double threshold = (phong_angle_property != NULL) ? cos((atof(phong_angle_property) + 0.01f) * 0.0174533f) : 0.0f;
+	// </ELIM>
 
-	for (int f0 = 0; f0 < brush_inst->face_count; ++f0) {
-		for (int f1 = 0; f1 < brush_inst->face_count; ++f1) {
-			for (int f2 = 0; f2 < brush_inst->face_count; ++f2) {
+	const int face_count = brush_inst->face_count;
+	for (int f0 = 0; f0 < face_count; ++f0) {
+		// <ELIM> Redundant lookup for reused values
+		face *face_inst = &map_data->entities[entity_idx].brushes[brush_idx].faces[f0];
+		LMFaceGeometry *face_geo_inst = &map_data->entity_geo[entity_idx].brushes[brush_idx].faces[f0];
+		// </ELIM>
+
+		for (int f1 = 0; f1 < face_count; ++f1) {
+			for (int f2 = 0; f2 < face_count; ++f2) {
+
+				// <ELIM> Skip trivial cases
+				if ((f0 == f1) || (f0 == f2) || (f1 == f2))
+				{
+					continue;
+				}
+				// </ELIM>
+
 				vec3 vertex = { 0 };
 				if (intersect_faces(brush_inst->faces[f0], brush_inst->faces[f1], brush_inst->faces[f2], &vertex)) {
 					if (vertex_in_hull(brush_inst->faces, brush_inst->face_count, vertex)) {
-						face *face_inst = &map_data->entities[entity_idx].brushes[brush_idx].faces[f0];
-						LMFaceGeometry *face_geo_inst = &map_data->entity_geo[entity_idx].brushes[brush_idx].faces[f0];
+						// <ELIM> Redundant lookup for reused values
+						// face *face_inst = &map_data->entities[entity_idx].brushes[brush_idx].faces[f0];
+						// LMFaceGeometry *face_geo_inst = &map_data->entity_geo[entity_idx].brushes[brush_idx].faces[f0];
+						// </ELIM>
 
 						vec3 normal;
 
-						const char *phong_property = map_data->map_data_get_entity_property(entity_idx, "_phong");
-						bool phong = phong_property != NULL && strcmp(phong_property, "1") == 0;
+						// <ELIM> Redundant lookup for reused values
+						// const char *phong_property = map_data->map_data_get_entity_property(entity_idx, "_phong");
+						// bool phong = phong_property != NULL && strcmp(phong_property, "1") == 0;
+						// </ELIM>
 						if (phong) {
-							const char *phong_angle_property = map_data->map_data_get_entity_property(entity_idx, "_phong_angle");
+							// <ELIM> Redundant lookup for reused values
+							// const char *phong_angle_property = map_data->map_data_get_entity_property(entity_idx, "_phong_angle");
+							// </ELIM>
 							if (phong_angle_property != NULL) {
-								double threshold = cos((atof(phong_angle_property) + 0.01) * 0.0174533);
+								// <ELIM> Redundant lookup for reused values
+								// double threshold = cos((atof(phong_angle_property) + 0.01) * 0.0174533);
+								// </ELIM>
 								normal = brush_inst->faces[f0].plane_normal;
 								if (vec3_dot(brush_inst->faces[f0].plane_normal, brush_inst->faces[f1].plane_normal) > threshold) {
 									normal = vec3_add(normal, brush_inst->faces[f1].plane_normal);
@@ -239,7 +310,12 @@ void LMGeoGenerator::generate_brush_vertices(int entity_idx, int brush_idx) {
 
 						for (int v = 0; v < face_geo_inst->vertex_count; ++v) {
 							vec3 comp_vertex = face_geo_inst->vertices[v].vertex;
-							if (vec3_length(vec3_sub(vertex, comp_vertex)) < CMP_EPSILON) {
+							// <ELIM> Used length-squared to avoid sqrt()
+							// if (vec3_length(vec3_sub(vertex, comp_vertex)) < CMP_EPSILON) {
+							const vec3 delta = vec3_sub(vertex, comp_vertex);
+							constexpr double CMP_EPSILON_SQUARED = (CMP_EPSILON * CMP_EPSILON);
+							if (vec3_dot(delta, delta) < CMP_EPSILON_SQUARED) {
+							// </ELIM>
 								unique_vertex = false;
 								duplicate_index = v;
 								break;
