@@ -163,24 +163,16 @@ void LMGeoGenerator::run() {
 						vec3 local_lhs = vec3_sub(*lhs, wind_face_center);
 						double lhs_pu = vec3_dot(local_lhs, u);
 						double lhs_pv = vec3_dot(local_lhs, v);
-						// <ELIM> FUCK atan2 expensive ass shit
-						// double lhs_angle = atan2(lhs_pv, lhs_pu);
+						double lhs_angle = atan2(lhs_pv, lhs_pu);
 
 						vec3 local_rhs = vec3_sub(*rhs, wind_face_center);
 						double rhs_pu = vec3_dot(local_rhs, u);
 						double rhs_pv = vec3_dot(local_rhs, v);
-						// double rhs_angle = atan2(rhs_pv, rhs_pu);
+						double rhs_angle = atan2(rhs_pv, rhs_pu);
 
-						double orientation = (lhs_pu * rhs_pv - lhs_pv * rhs_pu);
-
-						// if (lhs_angle <= rhs_angle) {
-						// 	break;
-						// }
-						if (orientation > 0)
-						{
+						if (lhs_angle <= rhs_angle) {
 							break;
 						}
-						// </ELIM>
 
 						vertices[j + 1] = vertices[j];
 						j--;
