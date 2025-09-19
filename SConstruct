@@ -13,16 +13,33 @@ env = SConscript("godot-cpp/SConstruct")
 # - LINKFLAGS are for linking flags
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
-env.Append(CPPPATH=["src/", "src/map/"])
+env.Append(CPPPATH=["src/", "src/map/", "src/secure_store/"])
 sources = Glob("src/*.cpp")
 sources += Glob("src/builders/*.cpp")
 sources += Glob("src/map/*.cpp")
+sources += Glob("src/secure_store/*.cpp")
 
 try:
 	doc_data = env.GodotCPPDocData("src/gen/doc_data.gen.cpp", source=Glob("doc_classes/*.xml"))
 	sources.append(doc_data)
 except AttributeError:
 	print("Not including class reference as we're targeting a pre-4.3 baseline.")
+
+plat = env["platform"]
+
+if plat == "windows":
+	env.Append(LIBS=["Advapi32"])
+
+elif plat == "osx":
+	env.Append(LINKFLAGS=["-framework", "Security", "-framework", "CoreFoundation"])
+
+# libsecret-1-dev libsecret-devel
+# eg
+# sudo apt install libsecret-1-dev
+# sudo dnf install libsecret-devel
+# sudo pacman -S libsecret
+elif plat == "linux":
+	env.ParseConfig("pkg-config --cflags --libs libsecret-1")
 
 if env["platform"] == "windows" and env["target"] == "template_debug":
 	env.Append(LINKFLAGS=["/DEBUG"])

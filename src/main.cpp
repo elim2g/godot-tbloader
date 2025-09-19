@@ -5,6 +5,7 @@
 
 #include <tb_loader.h>
 #include <material_slot_map.h>
+#include <secure_store.h>
 
 using namespace godot;
 
@@ -15,6 +16,7 @@ void register_tbloader_types(ModuleInitializationLevel p_level)
 	}
 	ClassDB::register_class<TBLoader>();
 	ClassDB::register_class<MaterialSlotMap>();
+	ClassDB::register_class<SecureStore>();
 }
 
 void unregister_tbloader_types(ModuleInitializationLevel p_level)
