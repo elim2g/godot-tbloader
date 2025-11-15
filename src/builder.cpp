@@ -49,20 +49,25 @@ void Builder::load_map(const String& path, bool generate_geometry)
 		load_and_cache_map_textures();
 	}
 
+	// <ELIM> Moved texture sizing to the moment textures are loaded to prevent hashtable lookup
 	// We have to manually set the size of textures
-	for (int i = 0; i < m_map->texture_count; i++) {
-		auto& tex = m_map->textures[i];
+	// {
+	// 	SCOPED_TIMER(TEXTURE_SIZING);
+	// 	for (int i = 0; i < m_map->texture_count; i++) {
+	// 		auto& tex = m_map->textures[i];
 
-		auto res_texture = texture_from_name(tex.name);
-		if (res_texture != nullptr) {
-			tex.width = res_texture->get_width();
-			tex.height = res_texture->get_height();
-		} else {
-			// Make sure we don't divide by 0 and create NaN UV's
-			tex.width = 1;
-			tex.height = 1;
-		}
-	}
+	// 		auto res_texture = texture_from_name(tex.name);
+	// 		if (res_texture != nullptr) {
+	// 			tex.width = res_texture->get_width();
+	// 			tex.height = res_texture->get_height();
+	// 		} else {
+	// 			// Make sure we don't divide by 0 and create NaN UV's
+	// 			tex.width = 1;
+	// 			tex.height = 1;
+	// 		}
+	// 	}
+	// }
+	// </ELIM>
 
 	// Run geometry generator (this also generates UV's, so we do this last)
 	if (generate_geometry)
@@ -633,7 +638,7 @@ void Builder::load_and_cache_map_textures()
 
 	for (int tex_i = 0; tex_i < m_map->texture_count; tex_i++) {
 		bool has_loaded_texture = false;
-		const LMTextureData& tex = m_map->textures[tex_i];
+		LMTextureData& tex = m_map->textures[tex_i];
 
 		// Find the texture with a supported extension - stop when it can be loaded
 		for (int ext_i = 0; ext_i < num_extensions; ext_i++) {
@@ -645,12 +650,24 @@ void Builder::load_and_cache_map_textures()
 			}
 		}
 
-		if (!has_loaded_texture && strcmp(tex.name, "__TB_empty") != 0) {
-			UtilityFunctions::printerr("Texture cannot be found or is unsupported! - ", m_loader->m_texture_path, tex.name);
-			if (m_loader->m_texture_path.is_empty()) {
-				UtilityFunctions::printerr("texture_path is empty");
-			}
+		// <ELIM> Apply texture sizes as soon as they're loaded
+		if (has_loaded_texture) {
+			auto loaded_texture = m_loaded_map_textures[tex.name];
+			tex.width = loaded_texture->get_width();
+			tex.height = loaded_texture->get_height();
 		}
+		else {
+			tex.width = 1;
+			tex.height = 1;
+		}
+
+		// if (!has_loaded_texture && strcmp(tex.name, "__TB_empty") != 0) {
+		// 	UtilityFunctions::printerr("Texture cannot be found or is unsupported! - ", m_loader->m_texture_path, tex.name);
+		// 	if (m_loader->m_texture_path.is_empty()) {
+		// 		UtilityFunctions::printerr("texture_path is empty");
+		// 	}
+		// }
+		// </ELIM>
 	}
 }
 
