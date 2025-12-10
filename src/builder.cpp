@@ -12,11 +12,11 @@
 #include <godot_cpp/templates/vmap.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 
-#include <tb_loader.h>
+#include <turnt_loader.h>
 #include <scoped_timer.h>
 #include <material_slot_map.h>
 
-Builder::Builder(TBLoader* loader)
+Builder::Builder(TurntLoader* loader)
 {
 	m_loader = loader;
 	m_map = std::make_shared<LMMapData>();

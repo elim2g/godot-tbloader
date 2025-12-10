@@ -4,7 +4,7 @@ same map parsing code using the original [libmap](https://github.com/QodotPlugin
 modified [C++ port](https://github.com/EIRTeam/qodot/tree/4.0) of it.
 
 # Why not Qodot?
-Qodot is great! It works really well. I initially made TBLoader because I wanted to try several
+Qodot is great! It works really well. I initially made TurntLoader because I wanted to try several
 different approaches to creating meshes, including creating a bunch of `CSGMesh3D` inside of
 `CSGCombiner3D`, but that ended up being [problematic](https://github.com/godotengine/godot/issues/58637).
 
@@ -22,17 +22,17 @@ There are some other alternatives, as well:
   builder, much like what SabreCSG used to be.
 
 # Usage
-To install TBLoader, you can either install it through [AssetLib](https://godotengine.org/asset-library/asset/1265)
+To install TurntLoader, you can either install it through [AssetLib](https://godotengine.org/asset-library/asset/1265)
 (search for "TrenchBroom Loader"), or by downloading a [release from Github](https://github.com/codecat/godot-tbloader/releases)
 and extracting it to your project's `addons` folder, so that you have a structure like this:
 ```
-project/addons/tbloader/plugin.cfg
+project/addons/libturnt/plugin.cfg
 ```
 
 You might have to manually enable the plugin from your project settings. In the Godot editor, click
-on Project -> Project Settings, and go to the Addons tab. Check the "Enable" box next to TBLoader.
+on Project -> Project Settings, and go to the Addons tab. Check the "Enable" box next to TurntLoader.
 
-To build a level's geometry, create a `TBLoader` node in your scene hierarchy. In the properties of
+To build a level's geometry, create a `TurntLoader` node in your scene hierarchy. In the properties of
 the node you can select where your `.map` file is located, plus some more useful settings. With the
 node still selected and the 3D view open, you will see a button `Build Meshes` in the toolbar the 3D
 view. Click that button to build the geometry.
@@ -62,7 +62,7 @@ following in this order:
 * `res://entities/foo/bar/foobar.tscn`
 
 The first resource it finds will be loaded and instantiated. The root for this (`res://entities` by
-default) can be changed in the `TBLoader` node properties.
+default) can be changed in the `TurntLoader` node properties.
 
 Any properties set on the entity will be set directly on the instantiated node using
 [`_set`](https://docs.godotengine.org/en/latest/classes/class_object.html#class-object-method-set)
@@ -70,7 +70,7 @@ and [`_get`](https://docs.godotengine.org/en/latest/classes/class_object.html#cl
 The getter is used first to determine the type of the property.
 
 # Textures
-To see your textures in TrenchBroom, navigate to `Preferences` -> `Godot` -> `Game Path` and set it to your project's root directory. TrenchBroom will be able to see textures in your project. TBLoader will look for your textures in the `res://textures` directory. If you have a material (`rust.material`) in the same folder and with the same name as your texture (`rust.png`), TBLoader will load your material instead.
+To see your textures in TrenchBroom, navigate to `Preferences` -> `Godot` -> `Game Path` and set it to your project's root directory. TrenchBroom will be able to see textures in your project. TurntLoader will look for your textures in the `res://textures` directory. If you have a material (`rust.material`) in the same folder and with the same name as your texture (`rust.png`), TurntLoader will load your material instead.
 
 > Note: This currently only works with textures in `.png` format, and materials in `.material` or `.tres`.
 
@@ -83,8 +83,8 @@ well if you want it to run on consumer hardware. To do this, you need to already
 tool configured on your machine (you need a keychain profile), and then run:
 
 ```
-$ codesign -s "Developer ID Application: Your Name (1234567890)" libtbloader.macos.universal.dylib --timestamp
-$ zip archive.zip libtbloader.macos.universal.dylib
+$ codesign -s "Developer ID Application: Your Name (1234567890)" libturnt.macos.universal.dylib --timestamp
+$ zip archive.zip libturnt.macos.universal.dylib
 $ xcrun notarytool submit --keychain-profile "Profile Name" --wait archive.zip
 ```
 

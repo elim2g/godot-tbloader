@@ -19,7 +19,7 @@
 
 using namespace godot;
 
-class TBLoader;
+class TurntLoader;
 
 enum class ColliderType
 {
@@ -42,12 +42,12 @@ enum class ColliderShape
 class Builder
 {
 public:
-	TBLoader* m_loader;
+	TurntLoader* m_loader;
 	std::shared_ptr<LMMapData> m_map;
 	HashMap<const char*, Ref<Texture2D>> m_loaded_map_textures; // Texture Name(const char*) - Ref<Texture2D>
 
 public:
-	Builder(TBLoader* loader);
+	Builder(TurntLoader* loader);
 	~Builder();
 
 	void load_map(const String& path, bool generate_geometry = true);

@@ -16,7 +16,7 @@ func _exit_tree():
 	map_control = null
 
 func _handles(object):
-	return object is TBLoader
+	return object is TurntLoader
 
 func _make_visible(visible: bool):
 	map_control.set_visible(visible)

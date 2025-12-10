@@ -46,14 +46,14 @@ if env["platform"] == "windows" and env["target"] == "template_debug":
 
 if env["platform"] == "osx":
 	library = env.SharedLibrary(
-		"addons/tbloader/bin/libtbloader.{}.framework/libtbloader.{}".format(
+		"addons/libturnt/bin/libturnt.{}.framework/libturnt.{}".format(
 			env["platform"], env["platform"]
 		),
 		source=sources,
 	)
 else:
 	library = env.SharedLibrary(
-		"addons/tbloader/bin/tbloader.{}.{}{}".format(
+		"addons/libturnt/bin/libturnt.{}.{}{}".format(
 			env["platform"], env["arch"], env["SHLIBSUFFIX"]
 		),
 		source=sources,

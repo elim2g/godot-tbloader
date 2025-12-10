@@ -1,0 +1,12 @@
+[configuration]
+entry_symbol = "libturnt_init"
+compatibility_minimum = "4.1"
+reloadable = true
+
+[icons]
+TurntLoader = "res://addons/libturnt/icons/libturnt.svg"
+
+[libraries]
+windows.x86_64 = "bin/libturnt.windows.x86_64.dll"
+linux.x86_64 = "bin/libturnt.linux.x86_64.so"
+macos = "bin/libturnt.macos.universal.dylib"

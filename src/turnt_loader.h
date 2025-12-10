@@ -10,9 +10,9 @@
 
 using namespace godot;
 
-class TBLoader : public Node3D
+class TurntLoader : public Node3D
 {
-	GDCLASS(TBLoader, Node3D);
+	GDCLASS(TurntLoader, Node3D);
 
 public:
 	String m_map_path;
@@ -40,8 +40,8 @@ protected:
 	static void _bind_methods();
 
 public:
-	TBLoader();
-	~TBLoader();
+	TurntLoader();
+	~TurntLoader();
 
 	// Map
 	void set_map(const String& map);
