@@ -72,18 +72,9 @@ void Builder::load_map(const String& path, bool generate_geometry)
 	// Run geometry generator (this also generates UV's, so we do this last)
 	if (generate_geometry)
 	{
-		{
-			SCOPED_TIMER(GEOGEN);
-			LMGeoGenerator geogen(m_map);
-			geogen.run();
-		}
-
-		// Build surface cache for optimized mesh building
-		{
-			SCOPED_TIMER(BUILD_SURFACE_CACHE);
-			m_surface_cache = std::make_unique<SurfaceCache>(m_map);
-			m_surface_cache->build_cache();
-		}
+		SCOPED_TIMER(GEOGEN);
+		LMGeoGenerator geogen(m_map);
+		geogen.run();
 	}
 }
 
@@ -562,17 +553,19 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 			}
 		}
 
-		// Lookup cached surfaces (pre-computed during load_map)
-		const LMSurfaces* surfs = nullptr;
-		if (m_surface_cache) {
-			surfs = m_surface_cache->get_surfaces(idx, i);
-		}
-		if (surfs == nullptr || surfs->surface_count == 0) {
+		// Gather surfaces for this texture
+		LMSurfaceGatherer surf_gather(m_map);
+		surf_gather.surface_gatherer_set_entity_index_filter(idx);
+		surf_gather.surface_gatherer_set_texture_filter(tex.name);
+		surf_gather.surface_gatherer_run();
+
+		auto& surfs = surf_gather.out_surfaces;
+		if (surfs.surface_count == 0) {
 			continue;
 		}
 
-		for (int j = 0; j < surfs->surface_count; j++) {
-			auto& surf = surfs->surfaces[j];
+		for (int i = 0; i < surfs.surface_count; i++) {
+			auto& surf = surfs.surfaces[i];
 			if (surf.vertex_count == 0) {
 				continue;
 			}

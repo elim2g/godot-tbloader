@@ -16,7 +16,6 @@
 #include <map_parser.h>
 #include <geo_generator.h>
 #include <surface_gatherer.h>
-#include <surface_cache.h>
 
 using namespace godot;
 
@@ -46,7 +45,6 @@ public:
 	TurntLoader* m_loader;
 	std::shared_ptr<LMMapData> m_map;
 	HashMap<const char*, Ref<Texture2D>> m_loaded_map_textures; // Texture Name(const char*) - Ref<Texture2D>
-	std::unique_ptr<SurfaceCache> m_surface_cache;
 
 public:
 	Builder(TurntLoader* loader);

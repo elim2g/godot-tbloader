@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+import os
+import sys
+
+# Get the parent environment (uses the godot-tbloader SConstruct setup)
+env = SConscript("../../godot-cpp/SConstruct")
+
+# Add include paths for map parsing
+env.Append(CPPPATH=[
+	"../../src/",
+	"../../src/map/",
+	"../../src/secure_store/",
+	"../../src/serialization/",
+])
+
+# Gather source files needed for benchmarking
+sources = [
+	"benchmark_import.cpp",
+	"../../src/map/map_parser.cpp",
+	"../../src/map/map_data.cpp",
+	"../../src/map/geo_generator.cpp",
+	"../../src/map/surface_gatherer.cpp",
+	"../../src/map/surface_cache.cpp",
+	"../../src/map/entity.cpp",
+	"../../src/map/matrix.cpp",
+	"../../src/map/vector.cpp",
+]
+
+# Platform-specific dependencies
+plat = env["platform"]
+
+if plat == "windows":
+	env.Append(LIBS=["Advapi32"])
+elif plat == "osx":
+	env.Append(LINKFLAGS=["-framework", "Security", "-framework", "CoreFoundation"])
+elif plat == "linux":
+	env.ParseConfig("pkg-config --cflags --libs libsecret-1")
+
+# Build the benchmark executable
+benchmark_exe = env.Program(
+	"benchmark_import",
+	source=sources,
+)
+
+Default(benchmark_exe)

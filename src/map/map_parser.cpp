@@ -74,18 +74,44 @@ bool LMMapParser::load_from_path(const char *map_file) {
 	component_idx = 0;
 	valve_uvs = false;
 
-	FILE *map = fopen(map_file, "r");
+	FILE *map = fopen(map_file, "rb");
 
 	if (!map) {
 		printf("Error: Failed to open map file.\n");
 		return false;
 	}
 
+	// Read entire file into memory for faster parsing (avoid fgetc() overhead)
+	fseek(map, 0, SEEK_END);
+	long file_size = ftell(map);
+	fseek(map, 0, SEEK_SET);
+
+	char *file_buffer = (char *)malloc(file_size + 1);
+	if (file_buffer == nullptr) {
+		printf("Error: Failed to allocate buffer for map file.\n");
+		fclose(map);
+		return false;
+	}
+
+	size_t bytes_read = fread(file_buffer, 1, file_size, map);
+	fclose(map);
+
+	if (bytes_read != (size_t)file_size) {
+		printf("Error: Failed to read entire map file.\n");
+		free(file_buffer);
+		return false;
+	}
+
+	file_buffer[file_size] = '\0';
+
+	// Parse from buffer
 	int c;
 	char buf[255];
 	int buf_head = 0;
 	bool is_quoted = false;
-	while ((c = fgetc(map)) != EOF) {
+	for (long i = 0; i < file_size; i++) {
+		c = (int)file_buffer[i];
+
 		if (c == '\n') {
 			buf[buf_head] = '\0';
 			token(buf);
@@ -105,8 +131,7 @@ bool LMMapParser::load_from_path(const char *map_file) {
 		}
 	}
 
-	fclose(map);
-
+	free(file_buffer);
 	return true;
 }
 

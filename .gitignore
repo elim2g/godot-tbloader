@@ -7,3 +7,4 @@ bin/
 
 # Generated code
 src/gen/
+test/benchmark/benchmark_import.exe
