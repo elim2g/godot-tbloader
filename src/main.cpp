@@ -6,6 +6,9 @@
 #include <turnt_loader.h>
 #include <material_slot_map.h>
 #include <secure_store.h>
+#include <serialization/tnt_checkpoint.h>
+#include <serialization/tnt_player_state.h>
+#include <serialization/debug_player_state.h>
 
 using namespace godot;
 
@@ -17,6 +20,11 @@ void register_libturnt_types(ModuleInitializationLevel p_level)
 	ClassDB::register_class<TurntLoader>();
 	ClassDB::register_class<MaterialSlotMap>();
 	ClassDB::register_class<SecureStore>();
+
+	// Serializable classes for demo recording/playback
+	ClassDB::register_class<TntCheckpoint>();
+	ClassDB::register_class<TntPlayerState>();
+	ClassDB::register_class<DebugPlayerState>();
 }
 
 void unregister_libturnt_types(ModuleInitializationLevel p_level)

@@ -13,11 +13,12 @@ env = SConscript("godot-cpp/SConstruct")
 # - LINKFLAGS are for linking flags
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
-env.Append(CPPPATH=["src/", "src/map/", "src/secure_store/"])
+env.Append(CPPPATH=["src/", "src/map/", "src/secure_store/", "src/serialization/"])
 sources = Glob("src/*.cpp")
 sources += Glob("src/builders/*.cpp")
 sources += Glob("src/map/*.cpp")
 sources += Glob("src/secure_store/*.cpp")
+sources += Glob("src/serialization/*.cpp")
 
 try:
 	doc_data = env.GodotCPPDocData("src/gen/doc_data.gen.cpp", source=Glob("doc_classes/*.xml"))
