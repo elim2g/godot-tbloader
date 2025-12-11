@@ -278,7 +278,9 @@ Node* Builder::build_entity_custom(int idx, LMEntity& ent, LMEntityGeometry& geo
 		}
 	}
 
-	UtilityFunctions::printerr("Path to entity resource could not be resolved: ", classname);
+	// <ELIM> We don't support all entity types - these errors are meaningless
+	// UtilityFunctions::printerr("Path to entity resource could not be resolved: ", classname);
+	// </ELIM>
 	return nullptr;
 }
 
@@ -459,28 +461,38 @@ void Builder::add_collider_from_mesh(Node3D* node, Ref<ArrayMesh>& mesh, Collide
 
 void Builder::add_surface_to_mesh(Ref<ArrayMesh>& mesh, LMSurface& surf)
 {
+	// Pre-allocate arrays to avoid growth reallocations (critical for performance)
 	PackedVector3Array vertices;
-	PackedFloat32Array tangents;
-	PackedVector3Array normals;
-	PackedVector2Array uvs;
-	PackedInt32Array indices;
+	vertices.resize(surf.vertex_count);
 
-	// Add all vertices
+	PackedFloat32Array tangents;
+	tangents.resize(surf.vertex_count * 4);
+
+	PackedVector3Array normals;
+	normals.resize(surf.vertex_count);
+
+	PackedVector2Array uvs;
+	uvs.resize(surf.vertex_count);
+
+	PackedInt32Array indices;
+	indices.resize(surf.index_count);
+
+	// Fill pre-allocated arrays (no reallocation overhead)
 	for (int k = 0; k < surf.vertex_count; k++) {
 		auto& v = surf.vertices[k];
 
-		vertices.push_back(lm_transform(v.vertex));
-		tangents.push_back(v.tangent.y);
-		tangents.push_back(v.tangent.z);
-		tangents.push_back(v.tangent.x);
-		tangents.push_back(v.tangent.w);
-		normals.push_back(Vector3(v.normal.y, v.normal.z, v.normal.x));
-		uvs.push_back(Vector2(v.uv.u, v.uv.v));
+		vertices[k] = lm_transform(v.vertex);
+		tangents[k * 4 + 0] = v.tangent.y;
+		tangents[k * 4 + 1] = v.tangent.z;
+		tangents[k * 4 + 2] = v.tangent.x;
+		tangents[k * 4 + 3] = v.tangent.w;
+		normals[k] = Vector3(v.normal.y, v.normal.z, v.normal.x);
+		uvs[k] = Vector2(v.uv.u, v.uv.v);
 	}
 
-	// Add all indices
+	// Fill indices array
 	for (int k = 0; k < surf.index_count; k++) {
-		indices.push_back(surf.indices[k]);
+		indices[k] = surf.indices[k];
 	}
 
 	Array arrays;
@@ -536,39 +548,36 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 			}
 
 		// Attempt to load material
-		{
-			SCOPED_TIMER(MATERIAL_LOAD);
-			material = material_from_name(tex.name);
+		material = material_from_name(tex.name);
 
-			if (material == nullptr) {
-				// Load texture
-				auto res_texture = texture_from_name(tex.name);
+		if (material == nullptr) {
+			// Load texture
+			auto res_texture = texture_from_name(tex.name);
 
-				// Create material
-				if (res_texture != nullptr) {
-					Ref<Material> new_material;
+			// Create material
+			if (res_texture != nullptr) {
+				Ref<Material> new_material;
 
-					if (has_material_template) {
-						// Duplicate and set texture for material template
-						// Only creates one copy per texture; materials are reused using a map
-						if (!material_template_map.has(tex.name)) {
-							auto material_template_copy = material_template->duplicate();
-							material_template_copy->set(m_loader->get_material_texture_path(), res_texture);
-							material_template_map.insert(tex.name, material_template_copy);
-						}
-						new_material = material_template_map[tex.name];
-					} else {
-						// Generate new material if no template supplied
-						Ref<StandardMaterial3D> new_standard_material = memnew(StandardMaterial3D());
-						new_standard_material->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, res_texture);
-						if (m_loader->m_filter_nearest) {
-							new_standard_material->set_texture_filter(BaseMaterial3D::TEXTURE_FILTER_NEAREST);
-						}
-						new_material = new_standard_material;
+				if (has_material_template) {
+					// Duplicate and set texture for material template
+					// Only creates one copy per texture; materials are reused using a map
+					if (!material_template_map.has(tex.name)) {
+						auto material_template_copy = material_template->duplicate();
+						material_template_copy->set(m_loader->get_material_texture_path(), res_texture);
+						material_template_map.insert(tex.name, material_template_copy);
 					}
-
-					material = new_material;
+					new_material = material_template_map[tex.name];
+				} else {
+					// Generate new material if no template supplied
+					Ref<StandardMaterial3D> new_standard_material = memnew(StandardMaterial3D());
+					new_standard_material->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, res_texture);
+					if (m_loader->m_filter_nearest) {
+						new_standard_material->set_texture_filter(BaseMaterial3D::TEXTURE_FILTER_NEAREST);
+					}
+					new_material = new_standard_material;
 				}
+
+				material = new_material;
 			}
 		}
 
@@ -581,34 +590,31 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 			continue;
 		}
 
-		{
-			SCOPED_TIMER(BUILD_SURFACES);
-			for (int j = 0; j < surfs->surface_count; j++) {
-				auto& surf = surfs->surfaces[j];
-				if (surf.vertex_count == 0) {
-					continue;
-				}
-
-				// Add surface to collision mesh
-				add_surface_to_mesh(collision_mesh, surf);
-
-				// Skip if the texture specifies that we only want collision (invisible walls)
-				if (tex.name == m_loader->get_clip_texture_name()) {
-					continue;
-				}
-
-				// Add surface to visual mesh
-				add_surface_to_mesh(mesh, surf);
-
-				// Give mesh material
-				const uint64_t surf_idx = mesh->get_surface_count()-1;
-				if (material != nullptr) {
-					mesh->surface_set_material(surf_idx, material);
-				}
-				// Map the surface index to the texture name so it can be changed programmatically at runtime
-				mesh->surface_set_name(surf_idx, tex.name);
-				material_slot_map->add_slot(tex.name);
+		for (int j = 0; j < surfs->surface_count; j++) {
+			auto& surf = surfs->surfaces[j];
+			if (surf.vertex_count == 0) {
+				continue;
 			}
+
+			// Add surface to collision mesh
+			add_surface_to_mesh(collision_mesh, surf);
+
+			// Skip if the texture specifies that we only want collision (invisible walls)
+			if (tex.name == m_loader->get_clip_texture_name()) {
+				continue;
+			}
+
+			// Add surface to visual mesh
+			add_surface_to_mesh(mesh, surf);
+
+			// Give mesh material
+			const uint64_t surf_idx = mesh->get_surface_count()-1;
+			if (material != nullptr) {
+				mesh->surface_set_material(surf_idx, material);
+			}
+			// Map the surface index to the texture name so it can be changed programmatically at runtime
+			mesh->surface_set_name(surf_idx, tex.name);
+			material_slot_map->add_slot(tex.name);
 		}
 		}
 	}
