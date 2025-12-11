@@ -30,17 +30,25 @@ public:
 	// Cache: (entity_idx, texture_idx) -> LMSurfaces
 	std::unordered_map<EntityTextureCacheKey, LMSurfaces, EntityTextureCacheKeyHash> cache;
 
+	// Diagnostics
+	int cache_hits = 0;
+	int cache_misses = 0;
+	int entries_cached = 0;
+
 	SurfaceCache(std::shared_ptr<LMMapData> _map_data);
 	~SurfaceCache();
 
 	// Pre-populate cache for all (entity, texture) combinations
 	void build_cache();
 
-	// Lookup cached surfaces (returns nullptr if not found)
-	const LMSurfaces* get_surfaces(int entity_idx, int texture_idx) const;
+	// Lookup or compute cached surfaces on first access (lazy caching)
+	const LMSurfaces* get_surfaces(int entity_idx, int texture_idx);
 
 	// Free all cached memory
 	void clear();
+
+	// Print diagnostics
+	void print_diagnostics() const;
 };
 
 #endif // SURFACE_CACHE_H

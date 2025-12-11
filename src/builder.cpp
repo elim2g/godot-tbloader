@@ -72,11 +72,9 @@ void Builder::load_map(const String& path, bool generate_geometry)
 	// Run geometry generator (this also generates UV's, so we do this last)
 	if (generate_geometry)
 	{
-		{
-			SCOPED_TIMER(GEOGEN);
-			LMGeoGenerator geogen(m_map);
-			geogen.run();
-		}
+		SCOPED_TIMER(GEOGEN);
+		LMGeoGenerator geogen(m_map);
+		geogen.run();
 
 		// Build surface cache for optimized mesh building
 		{
@@ -90,9 +88,17 @@ void Builder::load_map(const String& path, bool generate_geometry)
 void Builder::build_map()
 {
 	SCOPED_TIMER(BUILD_MAP);
-	for (int i = 0; i < m_map->entity_count; i++) {
-		auto& ent = m_map->entities[i];
-		build_entity(i, ent, ent.get_property("classname"));
+	{
+		SCOPED_TIMER(BUILD_ENTITIES);
+		for (int i = 0; i < m_map->entity_count; i++) {
+			auto& ent = m_map->entities[i];
+			build_entity(i, ent, ent.get_property("classname"));
+		}
+	}
+
+	// Print cache diagnostics
+	if (m_surface_cache) {
+		m_surface_cache->print_diagnostics();
 	}
 }
 
@@ -517,48 +523,52 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	bool has_material_template = material_template.is_valid();
 	VMap<String, Ref<Material>> material_template_map;
 
-	for (int i = 0; i < m_map->texture_count; i++) {
-		LMTextureData tex = m_map->textures[i];
-
-		// Create material
-		Ref<Material> material;
-
-		// Skip processing a surface when it's using the skip material
-		if (tex.name == m_loader->get_skip_texture_name()) {
-			continue;
-		}
-
-		// Attempt to load material
-		material = material_from_name(tex.name);
-
-		if (material == nullptr) {
-			// Load texture
-			auto res_texture = texture_from_name(tex.name);
+	{
+		for (int i = 0; i < m_map->texture_count; i++) {
+			LMTextureData tex = m_map->textures[i];
 
 			// Create material
-			if (res_texture != nullptr) {
-				Ref<Material> new_material;
+			Ref<Material> material;
 
-				if (has_material_template) {
-					// Duplicate and set texture for material template
-					// Only creates one copy per texture; materials are reused using a map
-					if (!material_template_map.has(tex.name)) {
-						auto material_template_copy = material_template->duplicate();
-						material_template_copy->set(m_loader->get_material_texture_path(), res_texture);
-						material_template_map.insert(tex.name, material_template_copy);
+			// Skip processing a surface when it's using the skip material
+			if (tex.name == m_loader->get_skip_texture_name()) {
+				continue;
+			}
+
+		// Attempt to load material
+		{
+			SCOPED_TIMER(MATERIAL_LOAD);
+			material = material_from_name(tex.name);
+
+			if (material == nullptr) {
+				// Load texture
+				auto res_texture = texture_from_name(tex.name);
+
+				// Create material
+				if (res_texture != nullptr) {
+					Ref<Material> new_material;
+
+					if (has_material_template) {
+						// Duplicate and set texture for material template
+						// Only creates one copy per texture; materials are reused using a map
+						if (!material_template_map.has(tex.name)) {
+							auto material_template_copy = material_template->duplicate();
+							material_template_copy->set(m_loader->get_material_texture_path(), res_texture);
+							material_template_map.insert(tex.name, material_template_copy);
+						}
+						new_material = material_template_map[tex.name];
+					} else {
+						// Generate new material if no template supplied
+						Ref<StandardMaterial3D> new_standard_material = memnew(StandardMaterial3D());
+						new_standard_material->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, res_texture);
+						if (m_loader->m_filter_nearest) {
+							new_standard_material->set_texture_filter(BaseMaterial3D::TEXTURE_FILTER_NEAREST);
+						}
+						new_material = new_standard_material;
 					}
-					new_material = material_template_map[tex.name];
-				} else {
-					// Generate new material if no template supplied
-					Ref<StandardMaterial3D> new_standard_material = memnew(StandardMaterial3D());
-					new_standard_material->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, res_texture);
-					if (m_loader->m_filter_nearest) {
-						new_standard_material->set_texture_filter(BaseMaterial3D::TEXTURE_FILTER_NEAREST);
-					}
-					new_material = new_standard_material;
+
+					material = new_material;
 				}
-
-				material = new_material;
 			}
 		}
 
@@ -571,38 +581,45 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 			continue;
 		}
 
-		for (int j = 0; j < surfs->surface_count; j++) {
-			auto& surf = surfs->surfaces[j];
-			if (surf.vertex_count == 0) {
-				continue;
+		{
+			SCOPED_TIMER(BUILD_SURFACES);
+			for (int j = 0; j < surfs->surface_count; j++) {
+				auto& surf = surfs->surfaces[j];
+				if (surf.vertex_count == 0) {
+					continue;
+				}
+
+				// Add surface to collision mesh
+				add_surface_to_mesh(collision_mesh, surf);
+
+				// Skip if the texture specifies that we only want collision (invisible walls)
+				if (tex.name == m_loader->get_clip_texture_name()) {
+					continue;
+				}
+
+				// Add surface to visual mesh
+				add_surface_to_mesh(mesh, surf);
+
+				// Give mesh material
+				const uint64_t surf_idx = mesh->get_surface_count()-1;
+				if (material != nullptr) {
+					mesh->surface_set_material(surf_idx, material);
+				}
+				// Map the surface index to the texture name so it can be changed programmatically at runtime
+				mesh->surface_set_name(surf_idx, tex.name);
+				material_slot_map->add_slot(tex.name);
 			}
-
-			// Add surface to collision mesh
-			add_surface_to_mesh(collision_mesh, surf);
-
-			// Skip if the texture specifies that we only want collision (invisible walls)
-			if (tex.name == m_loader->get_clip_texture_name()) {
-				continue;
-			}
-
-			// Add surface to visual mesh
-			add_surface_to_mesh(mesh, surf);
-
-			// Give mesh material
-			const uint64_t surf_idx = mesh->get_surface_count()-1;
-			if (material != nullptr) {
-				mesh->surface_set_material(surf_idx, material);
-			}
-			// Map the surface index to the texture name so it can be changed programmatically at runtime
-			mesh->surface_set_name(surf_idx, tex.name);
-			material_slot_map->add_slot(tex.name);
+		}
 		}
 	}
 
 	// Unwrap UV2's if needed
 	if (m_loader->m_lighting_unwrap_uv2) {
-		mesh->lightmap_unwrap(mesh_instance->get_global_transform(), m_loader->m_lighting_unwrap_texel_size);
-		mesh_instance->set_gi_mode(GeometryInstance3D::GI_MODE_STATIC);
+		{
+			SCOPED_TIMER(LIGHTMAP_UNWRAP);
+			mesh->lightmap_unwrap(mesh_instance->get_global_transform(), m_loader->m_lighting_unwrap_texel_size);
+			mesh_instance->set_gi_mode(GeometryInstance3D::GI_MODE_STATIC);
+		}
 	}
 
 	// Create collisions if needed
