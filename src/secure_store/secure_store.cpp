@@ -1,4 +1,5 @@
 #include "secure_store.h"
+#include <godot_cpp/classes/marshalls.hpp>
 
 /// Windows
 #ifdef _WIN32
@@ -85,7 +86,7 @@ bool SecureStore::save(const String& key, const PackedByteArray &data)
         CFRelease(add);
         CFRelease(account);
 
-        return status == errSecSuccess
+        return status == errSecSuccess;
     }
 
     CFRelease(account);
@@ -102,14 +103,17 @@ bool SecureStore::save(const String& key, const PackedByteArray &data)
         { { "key", SECRET_SCHEMA_ATTRIBUTE_STRING }, { nullptr, (SecretSchemaAttributeType)0 } }
     };
 
+    // Convert binary data to base64 string for storage
+    String encoded = Marshalls::raw_to_base64(data);
+
     gboolean ok = secret_password_store_sync(
         &schema,
         SECRET_COLLECTION_DEFAULT,
         "TURNT API Token",
-        (const gchar*)data.ptr();
+        encoded.utf8().get_data(),
         nullptr,
         &error,
-        "key", 
+        "key",
         key.utf8().get_data(),
         nullptr
     );
@@ -173,7 +177,7 @@ PackedByteArray SecureStore::load(const String& key)
 #else
 
     GError *error = nullptr;
-    SecretSchema schema = 
+    SecretSchema schema =
     {
         "org.turnt.api", SECRET_SCHEMA_NONE,
         { {"key", SECRET_SCHEMA_ATTRIBUTE_STRING}, { nullptr, (SecretSchemaAttributeType)0 } }
@@ -184,20 +188,20 @@ PackedByteArray SecureStore::load(const String& key)
         nullptr
     );
 
-    if (error) 
-    { 
-        g_error_free(error); 
-        return out; 
+    if (error)
+    {
+        g_error_free(error);
+        return out;
     }
 
-    if (!pw) 
+    if (!pw)
     {
         return out;
     }
 
-    out = PackedByteArray();
-    out.resize(strlen(pw));
-    memcpy(out.ptrw(), pw, strlen(pw));
+    // Decode base64 string back to binary data
+    String encoded(pw);
+    out = Marshalls::base64_to_raw(encoded);
     secret_password_free(pw);
 
     return out;
