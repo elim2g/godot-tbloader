@@ -1,7 +1,10 @@
 #include "tnt_checkpoint.h"
+
+#include <godot_cpp/core/class_db.hpp>
+
 #include "serialization_helpers.h"
 
-namespace godot {
+
 
 PackedByteArray TntCheckpoint::serialize() const {
 	PackedByteArray bytes;
@@ -14,8 +17,10 @@ PackedByteArray TntCheckpoint::serialize() const {
 	return bytes;
 }
 
+
+
 bool TntCheckpoint::deserialize(const PackedByteArray& bytes) {
-	if (bytes.size() < TntCheckpointPOD::SERIALIZED_SIZE) {
+	if (bytes.size() < static_cast<int64_t>(TntCheckpointPOD::SERIALIZED_SIZE)) {
 		return false;
 	}
 
@@ -26,6 +31,8 @@ bool TntCheckpoint::deserialize(const PackedByteArray& bytes) {
 	return true;
 }
 
+
+
 Ref<TntCheckpoint> TntCheckpoint::duplicate() const {
 	Ref<TntCheckpoint> dup;
 	dup.instantiate();
@@ -33,11 +40,15 @@ Ref<TntCheckpoint> TntCheckpoint::duplicate() const {
 	return dup;
 }
 
+
+
 void TntCheckpoint::copy_from(const Ref<TntCheckpoint>& other) {
 	if (other.is_valid()) {
 		data = other->data;
 	}
 }
+
+
 
 void TntCheckpoint::_bind_methods() {
 	// Serialization methods
@@ -53,18 +64,14 @@ void TntCheckpoint::_bind_methods() {
 	// Property accessors
 	ClassDB::bind_method(D_METHOD("set_checkpoint_id", "id"), &TntCheckpoint::set_checkpoint_id);
 	ClassDB::bind_method(D_METHOD("get_checkpoint_id"), &TntCheckpoint::get_checkpoint_id);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "checkpoint_id"),
-		"set_checkpoint_id", "get_checkpoint_id");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "checkpoint_id"), "set_checkpoint_id", "get_checkpoint_id");
 
 	ClassDB::bind_method(D_METHOD("set_tick_achieved", "tick"), &TntCheckpoint::set_tick_achieved);
 	ClassDB::bind_method(D_METHOD("get_tick_achieved"), &TntCheckpoint::get_tick_achieved);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "tick_achieved"),
-		"set_tick_achieved", "get_tick_achieved");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "tick_achieved"), "set_tick_achieved", "get_tick_achieved");
 
 	// Constants
 	BIND_CONSTANT(SERIALIZED_SIZE);
 	BIND_CONSTANT(CHECKPOINT_ID_UNKNOWN);
 	BIND_CONSTANT(CHECKPOINT_NOT_CROSSED);
 }
-
-} // namespace godot

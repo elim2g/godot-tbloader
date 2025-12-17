@@ -1,13 +1,14 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
-#include <array>
-#include <cstdint>
 
-namespace godot {
+using namespace godot;
 
 /**
  * @struct DebugPlayerStatePOD
@@ -27,11 +28,11 @@ struct DebugPlayerStatePOD {
 	static constexpr size_t MAX_LOOP_ELEMENTS = 256;
 	static constexpr size_t MAX_SERIALIZED_SIZE =
 		4 +                                           // dbg_run_tick (u32)
-		(24 * 3) +                                    // positions: start, post_grounddetect, end (3×Vector3)
-		4 + (24 * MAX_LOOP_ELEMENTS) +               // loop_positions: count + array
+		(24 * 3) +                                    // positions: start, post_grounddetect, end (3xVector3)
+		4 + (24 * MAX_LOOP_ELEMENTS) +                // loop_positions: count + array
 		24 +                                          // dbg_start_tick_vel (Vector3)
-		1 + 8 + 24 +                                 // accel_type (u8) + accel_out (f64) + post_accel_vel (Vector3)
-		4 + (24 * MAX_LOOP_ELEMENTS);                // loop_velocities: count + array
+		1 + 8 + 24 +                                  // accel_type (u8) + accel_out (f64) + post_accel_vel (Vector3)
+		4 + (24 * MAX_LOOP_ELEMENTS);                 // loop_velocities: count + array
 
 	// Fixed fields
 	uint32_t dbg_run_tick = 0;
@@ -83,7 +84,7 @@ public:
 	 * @return Maximum serialized size (worst case with all 256 elements)
 	 */
 	static int get_max_serialized_size() {
-		return (int)DebugPlayerStatePOD::MAX_SERIALIZED_SIZE;
+		return static_cast<int>(DebugPlayerStatePOD::MAX_SERIALIZED_SIZE);
 	}
 
 	/**
@@ -125,92 +126,40 @@ public:
 	// Array Conversion Methods (for GDScript compatibility)
 	// ========================================================================
 
-	/**
-	 * Set loop positions from a PackedVector3Array.
-	 * @param positions Array of positions (capped at MAX_LOOP_ELEMENTS)
-	 */
 	void set_loop_positions(const PackedVector3Array& positions);
-
-	/**
-	 * Get loop positions as a PackedVector3Array.
-	 * @return Array of actual loop positions (only count elements)
-	 */
 	PackedVector3Array get_loop_positions() const;
 
-	/**
-	 * Set loop velocities from a PackedVector3Array.
-	 * @param velocities Array of velocities (capped at MAX_LOOP_ELEMENTS)
-	 */
 	void set_loop_velocities(const PackedVector3Array& velocities);
-
-	/**
-	 * Get loop velocities as a PackedVector3Array.
-	 * @return Array of actual loop velocities (only count elements)
-	 */
 	PackedVector3Array get_loop_velocities() const;
 
 	// ========================================================================
 	// Property Accessors (for GDScript)
 	// ========================================================================
 
-	void set_dbg_run_tick(int value) {
-		data.dbg_run_tick = static_cast<uint32_t>(value);
-	}
-	int get_dbg_run_tick() const {
-		return static_cast<int>(data.dbg_run_tick);
-	}
+	void set_dbg_run_tick(int value) { data.dbg_run_tick = static_cast<uint32_t>(value); }
+	int get_dbg_run_tick() const { return static_cast<int>(data.dbg_run_tick); }
 
-	void set_dbg_start_tick_pos(const Vector3& value) {
-		data.dbg_start_tick_pos = value;
-	}
-	Vector3 get_dbg_start_tick_pos() const {
-		return data.dbg_start_tick_pos;
-	}
+	void set_dbg_start_tick_pos(const Vector3& value) { data.dbg_start_tick_pos = value; }
+	Vector3 get_dbg_start_tick_pos() const { return data.dbg_start_tick_pos; }
 
-	void set_dbg_post_grounddetect_pos(const Vector3& value) {
-		data.dbg_post_grounddetect_pos = value;
-	}
-	Vector3 get_dbg_post_grounddetect_pos() const {
-		return data.dbg_post_grounddetect_pos;
-	}
+	void set_dbg_post_grounddetect_pos(const Vector3& value) { data.dbg_post_grounddetect_pos = value; }
+	Vector3 get_dbg_post_grounddetect_pos() const { return data.dbg_post_grounddetect_pos; }
 
-	void set_dbg_end_tick_pos(const Vector3& value) {
-		data.dbg_end_tick_pos = value;
-	}
-	Vector3 get_dbg_end_tick_pos() const {
-		return data.dbg_end_tick_pos;
-	}
+	void set_dbg_end_tick_pos(const Vector3& value) { data.dbg_end_tick_pos = value; }
+	Vector3 get_dbg_end_tick_pos() const { return data.dbg_end_tick_pos; }
 
-	void set_dbg_start_tick_vel(const Vector3& value) {
-		data.dbg_start_tick_vel = value;
-	}
-	Vector3 get_dbg_start_tick_vel() const {
-		return data.dbg_start_tick_vel;
-	}
+	void set_dbg_start_tick_vel(const Vector3& value) { data.dbg_start_tick_vel = value; }
+	Vector3 get_dbg_start_tick_vel() const { return data.dbg_start_tick_vel; }
 
-	void set_dbg_accel_type(int value) {
-		data.dbg_accel_type = static_cast<uint8_t>(value & 0xFF);
-	}
-	int get_dbg_accel_type() const {
-		return static_cast<int>(data.dbg_accel_type);
-	}
+	void set_dbg_accel_type(int value) { data.dbg_accel_type = static_cast<uint8_t>(value & 0xFF); }
+	int get_dbg_accel_type() const { return static_cast<int>(data.dbg_accel_type); }
 
-	void set_dbg_accel_out(double value) {
-		data.dbg_accel_out = value;
-	}
-	double get_dbg_accel_out() const {
-		return data.dbg_accel_out;
-	}
+	void set_dbg_accel_out(double value) { data.dbg_accel_out = value; }
+	double get_dbg_accel_out() const { return data.dbg_accel_out; }
 
-	void set_dbg_post_accel_vel(const Vector3& value) {
-		data.dbg_post_accel_vel = value;
-	}
-	Vector3 get_dbg_post_accel_vel() const {
-		return data.dbg_post_accel_vel;
-	}
+	void set_dbg_post_accel_vel(const Vector3& value) { data.dbg_post_accel_vel = value; }
+	Vector3 get_dbg_post_accel_vel() const { return data.dbg_post_accel_vel; }
 
 protected:
 	static void _bind_methods();
 };
-
-} // namespace godot

@@ -1,7 +1,12 @@
 #include "debug_player_state.h"
+
+#include <godot_cpp/core/class_db.hpp>
+
 #include "serialization_helpers.h"
 
-namespace godot {
+
+using namespace godot;
+
 
 int DebugPlayerState::get_serialized_size() const {
 	// Fixed header size + variable array data
@@ -13,8 +18,10 @@ int DebugPlayerState::get_serialized_size() const {
 		1 + 8 + 24 +                                     // accel_type (u8) + accel_out (f64) + post_accel_vel (Vector3)
 		4 + (24 * data.dbg_loop_velocities_count);      // loop_velocities: count + actual elements
 
-	return (int)size;
+	return static_cast<int>(size);
 }
+
+
 
 PackedByteArray DebugPlayerState::serialize() const {
 	PackedByteArray bytes;
@@ -49,6 +56,8 @@ PackedByteArray DebugPlayerState::serialize() const {
 	return bytes;
 }
 
+
+
 bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
 	// Minimum size: fixed header without any array elements
 	size_t min_size =
@@ -59,7 +68,7 @@ bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
 		1 + 8 + 24 + // accel fields
 		4;           // loop_velocities count
 
-	if (bytes.size() < (int)min_size) {
+	if (bytes.size() < static_cast<int64_t>(min_size)) {
 		return false;
 	}
 
@@ -78,7 +87,7 @@ bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
 	}
 	data.dbg_loop_positions_count = positions_count;
 	for (uint32_t i = 0; i < positions_count; ++i) {
-		if (offset + 24 > (size_t)bytes.size()) {
+		if (offset + 24 > static_cast<size_t>(bytes.size())) {
 			return false;
 		}
 		data.dbg_loop_positions[i] = BinarySerializer::read_vec3_f64(bytes, offset);
@@ -98,7 +107,7 @@ bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
 	}
 	data.dbg_loop_velocities_count = velocities_count;
 	for (uint32_t i = 0; i < velocities_count; ++i) {
-		if (offset + 24 > (size_t)bytes.size()) {
+		if (offset + 24 > static_cast<size_t>(bytes.size())) {
 			return false;
 		}
 		data.dbg_loop_velocities[i] = BinarySerializer::read_vec3_f64(bytes, offset);
@@ -107,6 +116,8 @@ bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
 	return true;
 }
 
+
+
 Ref<DebugPlayerState> DebugPlayerState::duplicate() const {
 	Ref<DebugPlayerState> dup;
 	dup.instantiate();
@@ -114,14 +125,18 @@ Ref<DebugPlayerState> DebugPlayerState::duplicate() const {
 	return dup;
 }
 
+
+
 void DebugPlayerState::copy_from(const Ref<DebugPlayerState>& other) {
 	if (other.is_valid()) {
 		data = other->data;
 	}
 }
 
+
+
 void DebugPlayerState::set_loop_positions(const PackedVector3Array& positions) {
-	data.dbg_loop_positions_count = (uint32_t)positions.size();
+	data.dbg_loop_positions_count = static_cast<uint32_t>(positions.size());
 	if (data.dbg_loop_positions_count > MAX_LOOP_ELEMENTS) {
 		data.dbg_loop_positions_count = MAX_LOOP_ELEMENTS;
 	}
@@ -129,6 +144,8 @@ void DebugPlayerState::set_loop_positions(const PackedVector3Array& positions) {
 		data.dbg_loop_positions[i] = positions[i];
 	}
 }
+
+
 
 PackedVector3Array DebugPlayerState::get_loop_positions() const {
 	PackedVector3Array result;
@@ -139,8 +156,10 @@ PackedVector3Array DebugPlayerState::get_loop_positions() const {
 	return result;
 }
 
+
+
 void DebugPlayerState::set_loop_velocities(const PackedVector3Array& velocities) {
-	data.dbg_loop_velocities_count = (uint32_t)velocities.size();
+	data.dbg_loop_velocities_count = static_cast<uint32_t>(velocities.size());
 	if (data.dbg_loop_velocities_count > MAX_LOOP_ELEMENTS) {
 		data.dbg_loop_velocities_count = MAX_LOOP_ELEMENTS;
 	}
@@ -148,6 +167,8 @@ void DebugPlayerState::set_loop_velocities(const PackedVector3Array& velocities)
 		data.dbg_loop_velocities[i] = velocities[i];
 	}
 }
+
+
 
 PackedVector3Array DebugPlayerState::get_loop_velocities() const {
 	PackedVector3Array result;
@@ -157,6 +178,8 @@ PackedVector3Array DebugPlayerState::get_loop_velocities() const {
 	}
 	return result;
 }
+
+
 
 void DebugPlayerState::_bind_methods() {
 	// Serialization methods
@@ -223,5 +246,3 @@ void DebugPlayerState::_bind_methods() {
 	BIND_CONSTANT(ACCEL_TYPE_CROUCHSLIDE);
 	BIND_CONSTANT(ACCEL_TYPE_AIR);
 }
-
-} // namespace godot

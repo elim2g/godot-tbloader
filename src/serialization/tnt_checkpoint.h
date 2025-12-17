@@ -1,10 +1,11 @@
 #pragma once
 
-#include <godot_cpp/godot.hpp>
-#include <godot_cpp/classes/ref_counted.hpp>
 #include <cstdint>
 
-namespace godot {
+#include <godot_cpp/godot.hpp>
+#include <godot_cpp/classes/ref_counted.hpp>
+
+using namespace godot;
 
 /**
  * @struct TntCheckpointPOD
@@ -17,14 +18,8 @@ struct TntCheckpointPOD {
 	uint8_t checkpoint_id;   // 1 byte: checkpoint identifier (0-255)
 	int32_t tick_achieved;   // 4 bytes: tick number when crossed
 
-	// Compile-time size verification
 	static constexpr size_t SERIALIZED_SIZE = 5;
 
-	/**
-	 * Verify that struct size matches expected serialized size.
-	 * Note: This is checked at compile time but may need adjustment
-	 * if compiler adds padding.
-	 */
 	static_assert(sizeof(uint8_t) == 1, "uint8_t size check");
 	static_assert(sizeof(int32_t) == 4, "int32_t size check");
 };
@@ -55,8 +50,6 @@ public:
 	TntCheckpoint() = default;
 	~TntCheckpoint() = default;
 
-	// Note: GDCLASS macro already handles copy constructor/assignment deletion
-
 	// ========================================================================
 	// Serialization Methods
 	// ========================================================================
@@ -66,7 +59,7 @@ public:
 	 * @return The fixed serialized size (5 bytes)
 	 */
 	static int get_serialized_size() {
-		return (int)TntCheckpointPOD::SERIALIZED_SIZE;
+		return static_cast<int>(TntCheckpointPOD::SERIALIZED_SIZE);
 	}
 
 	/**
@@ -102,24 +95,12 @@ public:
 	// Property Accessors (for GDScript)
 	// ========================================================================
 
-	void set_checkpoint_id(int id) {
-		data.checkpoint_id = static_cast<uint8_t>(id & 0xFF);
-	}
+	void set_checkpoint_id(int id) { data.checkpoint_id = static_cast<uint8_t>(id & 0xFF); }
+	int get_checkpoint_id() const { return static_cast<int>(data.checkpoint_id); }
 
-	int get_checkpoint_id() const {
-		return static_cast<int>(data.checkpoint_id);
-	}
-
-	void set_tick_achieved(int tick) {
-		data.tick_achieved = tick;
-	}
-
-	int get_tick_achieved() const {
-		return data.tick_achieved;
-	}
+	void set_tick_achieved(int tick) { data.tick_achieved = tick; }
+	int get_tick_achieved() const { return data.tick_achieved; }
 
 protected:
 	static void _bind_methods();
 };
-
-} // namespace godot

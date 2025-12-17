@@ -1,7 +1,10 @@
 #include "tnt_player_state.h"
+
+#include <godot_cpp/core/class_db.hpp>
+
 #include "serialization_helpers.h"
 
-namespace godot {
+
 
 PackedByteArray TntPlayerState::serialize() const {
 	PackedByteArray bytes;
@@ -22,7 +25,6 @@ PackedByteArray TntPlayerState::serialize() const {
 	BinarySerializer::write_u8(bytes, offset, data.state_flags);
 	BinarySerializer::write_vec3_f64(bytes, offset, data.ground_normal);
 	BinarySerializer::write_u8(bytes, offset, data.num_ticks_grounded);
-
 	BinarySerializer::write_f64(bytes, offset, data.crouchslide_duration_remaining_s);
 	BinarySerializer::write_f64(bytes, offset, data.crouchslide_transition_remaining_s);
 
@@ -33,8 +35,10 @@ PackedByteArray TntPlayerState::serialize() const {
 	return bytes;
 }
 
+
+
 bool TntPlayerState::deserialize(const PackedByteArray& bytes) {
-	if (bytes.size() < TntPlayerStatePOD::SERIALIZED_SIZE) {
+	if (bytes.size() < static_cast<int64_t>(TntPlayerStatePOD::SERIALIZED_SIZE)) {
 		return false;
 	}
 
@@ -54,7 +58,6 @@ bool TntPlayerState::deserialize(const PackedByteArray& bytes) {
 	data.state_flags = BinarySerializer::read_u8(bytes, offset);
 	data.ground_normal = BinarySerializer::read_vec3_f64(bytes, offset);
 	data.num_ticks_grounded = BinarySerializer::read_u8(bytes, offset);
-
 	data.crouchslide_duration_remaining_s = BinarySerializer::read_f64(bytes, offset);
 	data.crouchslide_transition_remaining_s = BinarySerializer::read_f64(bytes, offset);
 
@@ -65,6 +68,8 @@ bool TntPlayerState::deserialize(const PackedByteArray& bytes) {
 	return true;
 }
 
+
+
 Ref<TntPlayerState> TntPlayerState::duplicate() const {
 	Ref<TntPlayerState> dup;
 	dup.instantiate();
@@ -72,11 +77,15 @@ Ref<TntPlayerState> TntPlayerState::duplicate() const {
 	return dup;
 }
 
+
+
 void TntPlayerState::copy_from(const Ref<TntPlayerState>& other) {
 	if (other.is_valid()) {
 		data = other->data;
 	}
 }
+
+
 
 Ref<TntPlayerState> TntPlayerState::s_create_interpolated_state(
 	const Ref<TntPlayerState>& from,
@@ -96,7 +105,7 @@ Ref<TntPlayerState> TntPlayerState::s_create_interpolated_state(
 	interp.instantiate();
 	interp->copy_from(from);
 
-	// Interpolate look direction (spherical for rotations would be better, but linear is simpler)
+	// Interpolate look direction
 	Vector2 look_diff = to->data.look_direction - from->data.look_direction;
 	interp->data.look_direction = from->data.look_direction + (look_diff * alpha);
 
@@ -109,6 +118,8 @@ Ref<TntPlayerState> TntPlayerState::s_create_interpolated_state(
 
 	return interp;
 }
+
+
 
 void TntPlayerState::_bind_methods() {
 	// Serialization methods
@@ -135,99 +146,68 @@ void TntPlayerState::_bind_methods() {
 
 	// State flag methods
 	ClassDB::bind_method(D_METHOD("is_player_grounded"), &TntPlayerState::is_player_grounded);
-	ClassDB::bind_method(D_METHOD("mut_set_player_grounded", "value"),
-		&TntPlayerState::mut_set_player_grounded);
+	ClassDB::bind_method(D_METHOD("mut_set_player_grounded", "value"), &TntPlayerState::mut_set_player_grounded);
 	ClassDB::bind_method(D_METHOD("is_player_crouched"), &TntPlayerState::is_player_crouched);
-	ClassDB::bind_method(D_METHOD("mut_set_player_crouched", "value"),
-		&TntPlayerState::mut_set_player_crouched);
-	ClassDB::bind_method(D_METHOD("is_player_crouchsliding"),
-		&TntPlayerState::is_player_crouchsliding);
-	ClassDB::bind_method(D_METHOD("mut_set_player_crouchsliding", "value"),
-		&TntPlayerState::mut_set_player_crouchsliding);
+	ClassDB::bind_method(D_METHOD("mut_set_player_crouched", "value"), &TntPlayerState::mut_set_player_crouched);
+	ClassDB::bind_method(D_METHOD("is_player_crouchsliding"), &TntPlayerState::is_player_crouchsliding);
+	ClassDB::bind_method(D_METHOD("mut_set_player_crouchsliding", "value"), &TntPlayerState::mut_set_player_crouchsliding);
 
 	// Physics query methods
 	ClassDB::bind_method(D_METHOD("get_planar_velocity"), &TntPlayerState::get_planar_velocity);
-	ClassDB::bind_method(D_METHOD("get_active_run_time_ticks"),
-		&TntPlayerState::get_active_run_time_ticks);
+	ClassDB::bind_method(D_METHOD("get_active_run_time_ticks"), &TntPlayerState::get_active_run_time_ticks);
 
-	// Property bindings (all 11 fields)
-	ClassDB::bind_method(D_METHOD("set_look_direction", "value"),
-		&TntPlayerState::set_look_direction);
+	// Property bindings
+	ClassDB::bind_method(D_METHOD("set_look_direction", "value"), &TntPlayerState::set_look_direction);
 	ClassDB::bind_method(D_METHOD("get_look_direction"), &TntPlayerState::get_look_direction);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "look_direction"),
-		"set_look_direction", "get_look_direction");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "look_direction"), "set_look_direction", "get_look_direction");
 
-	ClassDB::bind_method(D_METHOD("set_pressed_keys", "value"),
-		&TntPlayerState::set_pressed_keys);
+	ClassDB::bind_method(D_METHOD("set_pressed_keys", "value"), &TntPlayerState::set_pressed_keys);
 	ClassDB::bind_method(D_METHOD("get_pressed_keys"), &TntPlayerState::get_pressed_keys);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "pressed_keys"),
-		"set_pressed_keys", "get_pressed_keys");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "pressed_keys"), "set_pressed_keys", "get_pressed_keys");
 
 	ClassDB::bind_method(D_METHOD("set_run_tick", "value"), &TntPlayerState::set_run_tick);
 	ClassDB::bind_method(D_METHOD("get_run_tick"), &TntPlayerState::get_run_tick);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "run_tick"),
-		"set_run_tick", "get_run_tick");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "run_tick"), "set_run_tick", "get_run_tick");
 
-	ClassDB::bind_method(D_METHOD("set_run_started_tick", "value"),
-		&TntPlayerState::set_run_started_tick);
+	ClassDB::bind_method(D_METHOD("set_run_started_tick", "value"), &TntPlayerState::set_run_started_tick);
 	ClassDB::bind_method(D_METHOD("get_run_started_tick"), &TntPlayerState::get_run_started_tick);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "run_started_tick"),
-		"set_run_started_tick", "get_run_started_tick");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "run_started_tick"), "set_run_started_tick", "get_run_started_tick");
 
 	ClassDB::bind_method(D_METHOD("set_position", "value"), &TntPlayerState::set_position);
 	ClassDB::bind_method(D_METHOD("get_position"), &TntPlayerState::get_position);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "position"),
-		"set_position", "get_position");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "position"), "set_position", "get_position");
 
 	ClassDB::bind_method(D_METHOD("set_velocity", "value"), &TntPlayerState::set_velocity);
 	ClassDB::bind_method(D_METHOD("get_velocity"), &TntPlayerState::get_velocity);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "velocity"),
-		"set_velocity", "get_velocity");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "velocity"), "set_velocity", "get_velocity");
 
 	ClassDB::bind_method(D_METHOD("set_state_flags", "value"), &TntPlayerState::set_state_flags);
 	ClassDB::bind_method(D_METHOD("get_state_flags"), &TntPlayerState::get_state_flags);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "state_flags"),
-		"set_state_flags", "get_state_flags");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "state_flags"), "set_state_flags", "get_state_flags");
 
-	ClassDB::bind_method(D_METHOD("set_ground_normal", "value"),
-		&TntPlayerState::set_ground_normal);
+	ClassDB::bind_method(D_METHOD("set_ground_normal", "value"), &TntPlayerState::set_ground_normal);
 	ClassDB::bind_method(D_METHOD("get_ground_normal"), &TntPlayerState::get_ground_normal);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "ground_normal"),
-		"set_ground_normal", "get_ground_normal");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "ground_normal"), "set_ground_normal", "get_ground_normal");
 
-	ClassDB::bind_method(D_METHOD("set_num_ticks_grounded", "value"),
-		&TntPlayerState::set_num_ticks_grounded);
+	ClassDB::bind_method(D_METHOD("set_num_ticks_grounded", "value"), &TntPlayerState::set_num_ticks_grounded);
 	ClassDB::bind_method(D_METHOD("get_num_ticks_grounded"), &TntPlayerState::get_num_ticks_grounded);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "num_ticks_grounded"),
-		"set_num_ticks_grounded", "get_num_ticks_grounded");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "num_ticks_grounded"), "set_num_ticks_grounded", "get_num_ticks_grounded");
 
-	ClassDB::bind_method(D_METHOD("set_crouchslide_duration_remaining_s", "value"),
-		&TntPlayerState::set_crouchslide_duration_remaining_s);
-	ClassDB::bind_method(D_METHOD("get_crouchslide_duration_remaining_s"),
-		&TntPlayerState::get_crouchslide_duration_remaining_s);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "crouchslide_duration_remaining_s"),
-		"set_crouchslide_duration_remaining_s", "get_crouchslide_duration_remaining_s");
+	ClassDB::bind_method(D_METHOD("set_crouchslide_duration_remaining_s", "value"), &TntPlayerState::set_crouchslide_duration_remaining_s);
+	ClassDB::bind_method(D_METHOD("get_crouchslide_duration_remaining_s"), &TntPlayerState::get_crouchslide_duration_remaining_s);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "crouchslide_duration_remaining_s"), "set_crouchslide_duration_remaining_s", "get_crouchslide_duration_remaining_s");
 
-	ClassDB::bind_method(D_METHOD("set_crouchslide_transition_remaining_s", "value"),
-		&TntPlayerState::set_crouchslide_transition_remaining_s);
-	ClassDB::bind_method(D_METHOD("get_crouchslide_transition_remaining_s"),
-		&TntPlayerState::get_crouchslide_transition_remaining_s);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "crouchslide_transition_remaining_s"),
-		"set_crouchslide_transition_remaining_s", "get_crouchslide_transition_remaining_s");
+	ClassDB::bind_method(D_METHOD("set_crouchslide_transition_remaining_s", "value"), &TntPlayerState::set_crouchslide_transition_remaining_s);
+	ClassDB::bind_method(D_METHOD("get_crouchslide_transition_remaining_s"), &TntPlayerState::get_crouchslide_transition_remaining_s);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "crouchslide_transition_remaining_s"), "set_crouchslide_transition_remaining_s", "get_crouchslide_transition_remaining_s");
 
-	ClassDB::bind_method(D_METHOD("set_hangtime_duration_s", "value"),
-		&TntPlayerState::set_hangtime_duration_s);
-	ClassDB::bind_method(D_METHOD("get_hangtime_duration_s"),
-		&TntPlayerState::get_hangtime_duration_s);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "hangtime_duration_s"),
-		"set_hangtime_duration_s", "get_hangtime_duration_s");
+	ClassDB::bind_method(D_METHOD("set_hangtime_duration_s", "value"), &TntPlayerState::set_hangtime_duration_s);
+	ClassDB::bind_method(D_METHOD("get_hangtime_duration_s"), &TntPlayerState::get_hangtime_duration_s);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "hangtime_duration_s"), "set_hangtime_duration_s", "get_hangtime_duration_s");
 
-	ClassDB::bind_method(D_METHOD("set_doublejump_window_remaining_s", "value"),
-		&TntPlayerState::set_doublejump_window_remaining_s);
-	ClassDB::bind_method(D_METHOD("get_doublejump_window_remaining_s"),
-		&TntPlayerState::get_doublejump_window_remaining_s);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "doublejump_window_remaining_s"),
-		"set_doublejump_window_remaining_s", "get_doublejump_window_remaining_s");
+	ClassDB::bind_method(D_METHOD("set_doublejump_window_remaining_s", "value"), &TntPlayerState::set_doublejump_window_remaining_s);
+	ClassDB::bind_method(D_METHOD("get_doublejump_window_remaining_s"), &TntPlayerState::get_doublejump_window_remaining_s);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "doublejump_window_remaining_s"), "set_doublejump_window_remaining_s", "get_doublejump_window_remaining_s");
 
 	// Constants - Serialization
 	BIND_CONSTANT(SERIALIZED_SIZE);
@@ -249,5 +229,3 @@ void TntPlayerState::_bind_methods() {
 	BIND_CONSTANT(F_IS_CROUCHED);
 	BIND_CONSTANT(F_IS_CROUCHSLIDING);
 }
-
-} // namespace godot

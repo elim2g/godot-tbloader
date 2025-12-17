@@ -1,12 +1,13 @@
 #pragma once
 
+#include <cstdint>
+
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
-#include <cstdint>
 
-namespace godot {
+using namespace godot;
 
 /**
  * @struct TntPlayerStatePOD
@@ -34,15 +35,15 @@ struct TntPlayerStatePOD {
 
 	uint32_t run_tick;         // 4 bytes: current tick counter
 	uint32_t run_started_tick; // 4 bytes: tick when run started (-1 if not started)
-	Vector3 position;          // 24 bytes: world position (3×f64)
-	Vector3 velocity;          // 24 bytes: world velocity (3×f64)
+	Vector3 position;          // 24 bytes: world position (3xf64)
+	Vector3 velocity;          // 24 bytes: world velocity (3xf64)
 
 	// ========================================================================
 	// Ground State (50 bytes)
 	// ========================================================================
 
 	uint8_t state_flags;       // 1 byte: grounded, crouched, crouchsliding flags
-	Vector3 ground_normal;     // 24 bytes: surface normal of ground contact (3×f64)
+	Vector3 ground_normal;     // 24 bytes: surface normal of ground contact (3xf64)
 	uint8_t num_ticks_grounded; // 1 byte: how many ticks player has been grounded
 
 	double crouchslide_duration_remaining_s;      // 8 bytes: time left in crouch slide
@@ -54,16 +55,13 @@ struct TntPlayerStatePOD {
 
 	double hangtime_duration_s;                   // 8 bytes: air time counter
 	double doublejump_window_remaining_s;         // 8 bytes: time to perform double jump
-	double _padding1;                              // 8 bytes: reserved for future use
+	double _padding1;                             // 8 bytes: reserved for future use
 
 	// ========================================================================
 	// Total: 129 bytes (16+1 + 4+4+24+24 + 1+24+1+8+8 + 8+8 = 129)
 	// ========================================================================
 
 	static constexpr size_t SERIALIZED_SIZE = 129;
-
-	// Note: We serialize Vector2/Vector3 as f64 components (not struct size)
-	// so the actual in-memory size doesn't need to match serialized size
 };
 
 /**
@@ -113,8 +111,6 @@ public:
 	TntPlayerState() = default;
 	~TntPlayerState() = default;
 
-	// Note: GDCLASS macro already handles copy constructor/assignment deletion
-
 	// ========================================================================
 	// Serialization Methods
 	// ========================================================================
@@ -124,7 +120,7 @@ public:
 	 * @return 129 bytes (compile-time constant)
 	 */
 	static int get_serialized_size() {
-		return (int)TntPlayerStatePOD::SERIALIZED_SIZE;
+		return static_cast<int>(TntPlayerStatePOD::SERIALIZED_SIZE);
 	}
 
 	/**
@@ -174,33 +170,13 @@ public:
 	// Key Press Check Methods
 	// ========================================================================
 
-	bool is_forward_pressed() const {
-		return (data.pressed_keys & F_FIDX) != 0;
-	}
-
-	bool is_left_pressed() const {
-		return (data.pressed_keys & F_LIDX) != 0;
-	}
-
-	bool is_right_pressed() const {
-		return (data.pressed_keys & F_RIDX) != 0;
-	}
-
-	bool is_back_pressed() const {
-		return (data.pressed_keys & F_BIDX) != 0;
-	}
-
-	bool is_jump_pressed() const {
-		return (data.pressed_keys & F_JIDX) != 0;
-	}
-
-	bool is_crouch_pressed() const {
-		return (data.pressed_keys & F_CIDX) != 0;
-	}
-
-	bool is_shoot_pressed() const {
-		return (data.pressed_keys & F_SIDX) != 0;
-	}
+	bool is_forward_pressed() const { return (data.pressed_keys & F_FIDX) != 0; }
+	bool is_left_pressed() const { return (data.pressed_keys & F_LIDX) != 0; }
+	bool is_right_pressed() const { return (data.pressed_keys & F_RIDX) != 0; }
+	bool is_back_pressed() const { return (data.pressed_keys & F_BIDX) != 0; }
+	bool is_jump_pressed() const { return (data.pressed_keys & F_JIDX) != 0; }
+	bool is_crouch_pressed() const { return (data.pressed_keys & F_CIDX) != 0; }
+	bool is_shoot_pressed() const { return (data.pressed_keys & F_SIDX) != 0; }
 
 	// ========================================================================
 	// State Flag Check/Mutate Methods
@@ -242,122 +218,55 @@ public:
 	}
 
 	int get_active_run_time_ticks() const {
-		if (data.run_started_tick == -1) {
+		if (data.run_started_tick == static_cast<uint32_t>(-1)) {
 			return 0;
 		}
-		return data.run_tick - data.run_started_tick;
+		return static_cast<int>(data.run_tick - data.run_started_tick);
 	}
 
 	// ========================================================================
 	// Property Accessors (for GDScript)
 	// ========================================================================
 
-	// look_direction
-	void set_look_direction(const Vector2& value) {
-		data.look_direction = value;
-	}
-	Vector2 get_look_direction() const {
-		return data.look_direction;
-	}
+	void set_look_direction(const Vector2& value) { data.look_direction = value; }
+	Vector2 get_look_direction() const { return data.look_direction; }
 
-	// pressed_keys
-	void set_pressed_keys(int value) {
-		data.pressed_keys = static_cast<uint8_t>(value & 0xFF);
-	}
-	int get_pressed_keys() const {
-		return static_cast<int>(data.pressed_keys);
-	}
+	void set_pressed_keys(int value) { data.pressed_keys = static_cast<uint8_t>(value & 0xFF); }
+	int get_pressed_keys() const { return static_cast<int>(data.pressed_keys); }
 
-	// run_tick
-	void set_run_tick(int value) {
-		data.run_tick = static_cast<uint32_t>(value);
-	}
-	int get_run_tick() const {
-		return static_cast<int>(data.run_tick);
-	}
+	void set_run_tick(int value) { data.run_tick = static_cast<uint32_t>(value); }
+	int get_run_tick() const { return static_cast<int>(data.run_tick); }
 
-	// run_started_tick
-	void set_run_started_tick(int value) {
-		data.run_started_tick = static_cast<uint32_t>(value);
-	}
-	int get_run_started_tick() const {
-		return static_cast<int>(data.run_started_tick);
-	}
+	void set_run_started_tick(int value) { data.run_started_tick = static_cast<uint32_t>(value); }
+	int get_run_started_tick() const { return static_cast<int>(data.run_started_tick); }
 
-	// position
-	void set_position(const Vector3& value) {
-		data.position = value;
-	}
-	Vector3 get_position() const {
-		return data.position;
-	}
+	void set_position(const Vector3& value) { data.position = value; }
+	Vector3 get_position() const { return data.position; }
 
-	// velocity
-	void set_velocity(const Vector3& value) {
-		data.velocity = value;
-	}
-	Vector3 get_velocity() const {
-		return data.velocity;
-	}
+	void set_velocity(const Vector3& value) { data.velocity = value; }
+	Vector3 get_velocity() const { return data.velocity; }
 
-	// state_flags
-	void set_state_flags(int value) {
-		data.state_flags = static_cast<uint8_t>(value & 0xFF);
-	}
-	int get_state_flags() const {
-		return static_cast<int>(data.state_flags);
-	}
+	void set_state_flags(int value) { data.state_flags = static_cast<uint8_t>(value & 0xFF); }
+	int get_state_flags() const { return static_cast<int>(data.state_flags); }
 
-	// ground_normal
-	void set_ground_normal(const Vector3& value) {
-		data.ground_normal = value;
-	}
-	Vector3 get_ground_normal() const {
-		return data.ground_normal;
-	}
+	void set_ground_normal(const Vector3& value) { data.ground_normal = value; }
+	Vector3 get_ground_normal() const { return data.ground_normal; }
 
-	// num_ticks_grounded
-	void set_num_ticks_grounded(int value) {
-		data.num_ticks_grounded = static_cast<uint8_t>(value & 0xFF);
-	}
-	int get_num_ticks_grounded() const {
-		return static_cast<int>(data.num_ticks_grounded);
-	}
+	void set_num_ticks_grounded(int value) { data.num_ticks_grounded = static_cast<uint8_t>(value & 0xFF); }
+	int get_num_ticks_grounded() const { return static_cast<int>(data.num_ticks_grounded); }
 
-	// crouchslide_duration_remaining_s
-	void set_crouchslide_duration_remaining_s(double value) {
-		data.crouchslide_duration_remaining_s = value;
-	}
-	double get_crouchslide_duration_remaining_s() const {
-		return data.crouchslide_duration_remaining_s;
-	}
+	void set_crouchslide_duration_remaining_s(double value) { data.crouchslide_duration_remaining_s = value; }
+	double get_crouchslide_duration_remaining_s() const { return data.crouchslide_duration_remaining_s; }
 
-	// crouchslide_transition_remaining_s
-	void set_crouchslide_transition_remaining_s(double value) {
-		data.crouchslide_transition_remaining_s = value;
-	}
-	double get_crouchslide_transition_remaining_s() const {
-		return data.crouchslide_transition_remaining_s;
-	}
+	void set_crouchslide_transition_remaining_s(double value) { data.crouchslide_transition_remaining_s = value; }
+	double get_crouchslide_transition_remaining_s() const { return data.crouchslide_transition_remaining_s; }
 
-	// hangtime_duration_s
-	void set_hangtime_duration_s(double value) {
-		data.hangtime_duration_s = value;
-	}
-	double get_hangtime_duration_s() const {
-		return data.hangtime_duration_s;
-	}
+	void set_hangtime_duration_s(double value) { data.hangtime_duration_s = value; }
+	double get_hangtime_duration_s() const { return data.hangtime_duration_s; }
 
-	// doublejump_window_remaining_s
-	void set_doublejump_window_remaining_s(double value) {
-		data.doublejump_window_remaining_s = value;
-	}
-	double get_doublejump_window_remaining_s() const {
-		return data.doublejump_window_remaining_s;
-	}
+	void set_doublejump_window_remaining_s(double value) { data.doublejump_window_remaining_s = value; }
+	double get_doublejump_window_remaining_s() const { return data.doublejump_window_remaining_s; }
 
 protected:
 	static void _bind_methods();
 };
-
-} // namespace godot

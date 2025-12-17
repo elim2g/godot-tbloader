@@ -1,13 +1,14 @@
 #pragma once
 
+#include <cstdint>
+#include <cstring>
+
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
-#include <cstdint>
-#include <cstring>
 
-namespace godot {
+using namespace godot;
 
 /**
  * @class BinarySerializer
@@ -15,18 +16,26 @@ namespace godot {
  *
  * Provides static methods to read and write primitive types and Godot vector types
  * to/from PackedByteArray with explicit little-endian handling.
+ *
+ * Performance: Uses memcpy for multi-byte writes/reads. On little-endian systems
+ * (Windows, most Linux, macOS), endianness conversion is a no-op at compile time.
  */
 class BinarySerializer {
 public:
-	/**
-	 * Write primitive types to byte array
-	 */
+	// ========================================================================
+	// Write Methods (primitive types)
+	// ========================================================================
+
 	static void write_u8(PackedByteArray& arr, size_t& offset, uint8_t value);
 	static void write_u16(PackedByteArray& arr, size_t& offset, uint16_t value);
 	static void write_u32(PackedByteArray& arr, size_t& offset, uint32_t value);
 	static void write_i32(PackedByteArray& arr, size_t& offset, int32_t value);
 	static void write_i64(PackedByteArray& arr, size_t& offset, int64_t value);
 	static void write_f64(PackedByteArray& arr, size_t& offset, double value);
+
+	// ========================================================================
+	// Write Methods (bulk and vector)
+	// ========================================================================
 
 	/**
 	 * Write raw bytes from source array to destination at offset.
@@ -44,9 +53,10 @@ public:
 	static void write_vec2_f64(PackedByteArray& arr, size_t& offset, const Vector2& vec);
 	static void write_vec3_f64(PackedByteArray& arr, size_t& offset, const Vector3& vec);
 
-	/**
-	 * Read primitive types from byte array
-	 */
+	// ========================================================================
+	// Read Methods (primitive types)
+	// ========================================================================
+
 	static uint8_t read_u8(const PackedByteArray& arr, size_t& offset);
 	static uint16_t read_u16(const PackedByteArray& arr, size_t& offset);
 	static uint32_t read_u32(const PackedByteArray& arr, size_t& offset);
@@ -54,16 +64,18 @@ public:
 	static int64_t read_i64(const PackedByteArray& arr, size_t& offset);
 	static double read_f64(const PackedByteArray& arr, size_t& offset);
 
-	/**
-	 * Read Godot vector types from byte array
-	 */
+	// ========================================================================
+	// Read Methods (vector)
+	// ========================================================================
+
 	static Vector2 read_vec2_f64(const PackedByteArray& arr, size_t& offset);
 	static Vector3 read_vec3_f64(const PackedByteArray& arr, size_t& offset);
 
 private:
-	/**
-	 * Helper methods for endianness conversion (host <-> little-endian)
-	 */
+	// ========================================================================
+	// Endianness Helpers
+	// ========================================================================
+
 	static uint16_t to_little_endian_u16(uint16_t value);
 	static uint16_t from_little_endian_u16(uint16_t value);
 
@@ -77,8 +89,8 @@ private:
 	static double from_little_endian_f64(double value);
 
 	/**
-	 * Check if host is little-endian at compile time
-	 * Windows is always little-endian, most other systems are too
+	 * Check if host is little-endian at compile time.
+	 * Windows, x86/x64 Linux, and ARM macOS are all little-endian.
 	 */
 	static constexpr bool is_little_endian() {
 #if defined(_MSC_VER) || defined(__LITTLE_ENDIAN__) || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
@@ -88,5 +100,3 @@ private:
 #endif
 	}
 };
-
-} // namespace godot
