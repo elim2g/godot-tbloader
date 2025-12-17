@@ -61,6 +61,16 @@ void BinarySerializer::write_f64(PackedByteArray& arr, size_t& offset, double va
 	offset += 8;
 }
 
+void BinarySerializer::write_bytes(PackedByteArray& dest, size_t& offset, const PackedByteArray& src, size_t count) {
+	size_t bytes_to_copy = (count == 0) ? src.size() : count;
+	if (bytes_to_copy == 0 || offset + bytes_to_copy > dest.size()) {
+		offset += bytes_to_copy;
+		return;
+	}
+	memcpy(dest.ptrw() + offset, src.ptr(), bytes_to_copy);
+	offset += bytes_to_copy;
+}
+
 void BinarySerializer::write_vec2_f64(PackedByteArray& arr, size_t& offset, const Vector2& vec) {
 	write_f64(arr, offset, vec.x);
 	write_f64(arr, offset, vec.y);

@@ -63,28 +63,24 @@ void ChatMessage::_bind_methods() {
 
 
 PackedByteArray ChatMessage::serialize() const {
-	int total_size = get_serialized_size();
+	// Convert strings to UTF-8 once
+	PackedByteArray username_bytes = username.to_utf8_buffer();
+	PackedByteArray message_bytes = message.to_utf8_buffer();
+
+	// Pre-allocate exact size needed
 	PackedByteArray bytes;
-	bytes.resize(total_size);
+	bytes.resize(ChatMessagePOD::HEADER_SIZE + username_bytes.size() + message_bytes.size());
 	size_t offset = 0;
 
 	// Write header
 	BinarySerializer::write_u32(bytes, offset, header.timestamp);
-	BinarySerializer::write_u16(bytes, offset, header.username_length);
-	BinarySerializer::write_u16(bytes, offset, header.message_length);
+	BinarySerializer::write_u16(bytes, offset, static_cast<uint16_t>(username_bytes.size()));
+	BinarySerializer::write_u16(bytes, offset, static_cast<uint16_t>(message_bytes.size()));
 	BinarySerializer::write_u8(bytes, offset, header.message_type);
 
-	// Write username
-	PackedByteArray username_bytes = username.to_utf8_buffer();
-	for (int i = 0; i < username_bytes.size(); ++i) {
-		BinarySerializer::write_u8(bytes, offset, username_bytes[i]);
-	}
-
-	// Write message
-	PackedByteArray message_bytes = message.to_utf8_buffer();
-	for (int i = 0; i < message_bytes.size(); ++i) {
-		BinarySerializer::write_u8(bytes, offset, message_bytes[i]);
-	}
+	// Write username and message via memcpy
+	BinarySerializer::write_bytes(bytes, offset, username_bytes);
+	BinarySerializer::write_bytes(bytes, offset, message_bytes);
 
 	return bytes;
 }
@@ -114,26 +110,17 @@ bool ChatMessage::deserialize(const PackedByteArray& bytes) {
 	}
 
 	// Validate total size
-	int expected_size = ChatMessagePOD::HEADER_SIZE + header.username_length + header.message_length;
+	size_t expected_size = ChatMessagePOD::HEADER_SIZE + header.username_length + header.message_length;
 	if (bytes.size() != expected_size) {
 		return false;
 	}
 
-	// Read username bytes
-	PackedByteArray username_bytes;
-	username_bytes.resize(header.username_length);
-	for (int i = 0; i < header.username_length; ++i) {
-		username_bytes[i] = BinarySerializer::read_u8(bytes, offset);
-	}
-	username = username_bytes.get_string_from_utf8();
+	// Extract username and message using slice
+	size_t username_start = ChatMessagePOD::HEADER_SIZE;
+	size_t message_start = username_start + header.username_length;
 
-	// Read message bytes
-	PackedByteArray message_bytes;
-	message_bytes.resize(header.message_length);
-	for (int i = 0; i < header.message_length; ++i) {
-		message_bytes[i] = BinarySerializer::read_u8(bytes, offset);
-	}
-	message = message_bytes.get_string_from_utf8();
+	username = bytes.slice(username_start, message_start).get_string_from_utf8();
+	message = bytes.slice(message_start, expected_size).get_string_from_utf8();
 
 	return true;
 }
@@ -141,10 +128,8 @@ bool ChatMessage::deserialize(const PackedByteArray& bytes) {
 
 
 int ChatMessage::get_serialized_size() const {
-	// Re-calculate lengths from current strings (in case they changed)
-	int username_len = username.to_utf8_buffer().size();
-	int message_len = message.to_utf8_buffer().size();
-	return ChatMessagePOD::HEADER_SIZE + username_len + message_len;
+	// Use cached lengths from header (updated by set_username/set_message)
+	return ChatMessagePOD::HEADER_SIZE + header.username_length + header.message_length;
 }
 
 

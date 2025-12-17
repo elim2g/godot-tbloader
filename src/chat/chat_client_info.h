@@ -132,11 +132,7 @@ public:
 	 * @param data The new data to append
 	 */
 	void append_to_buffer(const PackedByteArray& data) {
-		int old_size = receive_buffer.size();
-		receive_buffer.resize(old_size + data.size());
-		for (int i = 0; i < data.size(); ++i) {
-			receive_buffer[old_size + i] = data[i];
-		}
+		receive_buffer.append_array(data);
 	}
 
 	/**
@@ -151,13 +147,7 @@ public:
 			receive_buffer.clear();
 			return;
 		}
-
-		PackedByteArray remaining;
-		remaining.resize(receive_buffer.size() - num_bytes);
-		for (int i = 0; i < remaining.size(); ++i) {
-			remaining[i] = receive_buffer[num_bytes + i];
-		}
-		receive_buffer = remaining;
+		receive_buffer = receive_buffer.slice(num_bytes);
 	}
 
 	/**

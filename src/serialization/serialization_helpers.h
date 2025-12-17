@@ -29,6 +29,16 @@ public:
 	static void write_f64(PackedByteArray& arr, size_t& offset, double value);
 
 	/**
+	 * Write raw bytes from source array to destination at offset.
+	 * Copies count bytes via memcpy for efficiency.
+	 * @param dest Destination array (must be pre-sized to accommodate offset + count)
+	 * @param offset Current write position (updated after write)
+	 * @param src Source byte array to copy from
+	 * @param count Number of bytes to copy (if 0, copies entire src)
+	 */
+	static void write_bytes(PackedByteArray& dest, size_t& offset, const PackedByteArray& src, size_t count = 0);
+
+	/**
 	 * Write Godot vector types to byte array (as consecutive f64 components)
 	 */
 	static void write_vec2_f64(PackedByteArray& arr, size_t& offset, const Vector2& vec);

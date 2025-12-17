@@ -309,11 +309,7 @@ void TcpChatServer::_poll_client_data() {
 					}
 
 					// We have complete message
-					PackedByteArray msg_bytes;
-					msg_bytes.resize(total_needed);
-					for (int j = 0; j < total_needed; ++j) {
-						msg_bytes[j] = client->receive_buffer[j];
-					}
+					PackedByteArray msg_bytes = client->receive_buffer.slice(0, total_needed);
 
 					// Check rate limit BEFORE processing
 					if (!client->can_send_message(current_time)) {
@@ -382,13 +378,8 @@ void TcpChatServer::_handle_auth_recv(Ref<ChatClientInfo> client) {
 			}
 
 			if (client->receive_buffer.size() >= needed) {
-				// Extract auth token
-				PackedByteArray token_bytes;
-				token_bytes.resize(token_len);
-				for (int j = 0; j < token_len; ++j) {
-					token_bytes[j] = client->receive_buffer[2 + j];
-				}
-				String authtoken = token_bytes.get_string_from_utf8();
+				// Extract auth token using slice
+				String authtoken = client->receive_buffer.slice(2, needed).get_string_from_utf8();
 				client->clear_buffer();
 
 				// Start auth validation
@@ -441,16 +432,14 @@ void TcpChatServer::_on_auth_completed(int pending_auth_idx) {
 	// In production, validate against https://api.turnt.pro/api/users using HTTPRequest
 	String username = "user_" + String::num(client_id);
 
-	// Send success response
-	PackedByteArray auth_response;
+	// Send success response: [success: 1 byte][username_len: 2 bytes][username: N bytes]
 	PackedByteArray username_bytes = username.to_utf8_buffer();
-	auth_response.resize(1 + 2 + username_bytes.size());
+	PackedByteArray auth_response;
+	auth_response.resize(3 + username_bytes.size());
 	size_t offset = 0;
 	BinarySerializer::write_u8(auth_response, offset, 1);  // success
 	BinarySerializer::write_u16(auth_response, offset, username_bytes.size());
-	for (int i = 0; i < username_bytes.size(); ++i) {
-		BinarySerializer::write_u8(auth_response, offset, username_bytes[i]);
-	}
+	BinarySerializer::write_bytes(auth_response, offset, username_bytes);
 
 	client->username = username;
 	client->authenticated = true;
