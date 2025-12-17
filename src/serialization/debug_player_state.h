@@ -8,6 +8,8 @@
 #include <godot_cpp/variant/vector3.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
+#include "serialization_helpers.h"
+
 using namespace godot;
 
 /**
@@ -26,13 +28,34 @@ using namespace godot;
  */
 struct DebugPlayerStatePOD {
 	static constexpr size_t MAX_LOOP_ELEMENTS = 256;
+
+	// Fixed header size (bytes before loop_positions array)
+	static constexpr size_t HEADER_PART1_SIZE =
+		SerializedSize::U32 +     // dbg_run_tick
+		SerializedSize::VEC3 +    // dbg_start_tick_pos
+		SerializedSize::VEC3;     // dbg_post_grounddetect_pos
+
+	// Size between loop_positions and loop_velocities
+	static constexpr size_t HEADER_PART2_SIZE =
+		SerializedSize::VEC3 +    // dbg_end_tick_pos
+		SerializedSize::VEC3 +    // dbg_start_tick_vel
+		SerializedSize::U8 +      // dbg_accel_type
+		SerializedSize::F64 +     // dbg_accel_out
+		SerializedSize::VEC3;     // dbg_post_accel_vel
+
+	// Minimum serialized size (empty arrays)
+	static constexpr size_t MIN_SERIALIZED_SIZE =
+		HEADER_PART1_SIZE +
+		SerializedSize::U32 +     // loop_positions count
+		HEADER_PART2_SIZE +
+		SerializedSize::U32;      // loop_velocities count
+
+	// Maximum serialized size (all 256 elements in both arrays)
 	static constexpr size_t MAX_SERIALIZED_SIZE =
-		4 +                                           // dbg_run_tick (u32)
-		(24 * 3) +                                    // positions: start, post_grounddetect, end (3xVector3)
-		4 + (24 * MAX_LOOP_ELEMENTS) +                // loop_positions: count + array
-		24 +                                          // dbg_start_tick_vel (Vector3)
-		1 + 8 + 24 +                                  // accel_type (u8) + accel_out (f64) + post_accel_vel (Vector3)
-		4 + (24 * MAX_LOOP_ELEMENTS);                 // loop_velocities: count + array
+		HEADER_PART1_SIZE +
+		SerializedSize::U32 + (SerializedSize::VEC3 * MAX_LOOP_ELEMENTS) +  // loop_positions
+		HEADER_PART2_SIZE +
+		SerializedSize::U32 + (SerializedSize::VEC3 * MAX_LOOP_ELEMENTS);   // loop_velocities
 
 	// Fixed fields
 	uint32_t dbg_run_tick = 0;

@@ -11,6 +11,34 @@
 using namespace godot;
 
 /**
+ * @brief Compile-time size constants for binary serialization.
+ *
+ * These constants define the serialized byte sizes for each primitive and
+ * vector type. Use these to compute SERIALIZED_SIZE in POD structs so that
+ * sizes automatically update if field types change.
+ *
+ * Example usage:
+ *   static constexpr size_t SERIALIZED_SIZE =
+ *       SerializedSize::U32 +    // run_tick
+ *       SerializedSize::VEC3 +   // position
+ *       SerializedSize::F64;     // time_remaining
+ */
+namespace SerializedSize {
+	// Primitive types
+	static constexpr size_t U8  = sizeof(uint8_t);   // 1 byte
+	static constexpr size_t U16 = sizeof(uint16_t);  // 2 bytes
+	static constexpr size_t U32 = sizeof(uint32_t);  // 4 bytes
+	static constexpr size_t I32 = sizeof(int32_t);   // 4 bytes
+	static constexpr size_t I64 = sizeof(int64_t);   // 8 bytes
+	static constexpr size_t F32 = sizeof(float);     // 4 bytes
+	static constexpr size_t F64 = sizeof(double);    // 8 bytes
+
+	// Vector types (serialized as consecutive f64 components)
+	static constexpr size_t VEC2 = F64 * 2;  // 16 bytes (2 doubles)
+	static constexpr size_t VEC3 = F64 * 3;  // 24 bytes (3 doubles)
+}
+
+/**
  * @class BinarySerializer
  * @brief Helper class for binary serialization/deserialization with little-endian byte order.
  *

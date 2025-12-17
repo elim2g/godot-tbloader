@@ -9,14 +9,12 @@ using namespace godot;
 
 
 int DebugPlayerState::get_serialized_size() const {
-	// Fixed header size + variable array data
+	// Use constants from POD struct + variable array data
 	size_t size =
-		4 +                                              // dbg_run_tick (u32)
-		(24 * 3) +                                       // positions: start, post_grounddetect, end
-		4 + (24 * data.dbg_loop_positions_count) +      // loop_positions: count + actual elements
-		24 +                                             // dbg_start_tick_vel (Vector3)
-		1 + 8 + 24 +                                     // accel_type (u8) + accel_out (f64) + post_accel_vel (Vector3)
-		4 + (24 * data.dbg_loop_velocities_count);      // loop_velocities: count + actual elements
+		DebugPlayerStatePOD::HEADER_PART1_SIZE +
+		SerializedSize::U32 + (SerializedSize::VEC3 * data.dbg_loop_positions_count) +
+		DebugPlayerStatePOD::HEADER_PART2_SIZE +
+		SerializedSize::U32 + (SerializedSize::VEC3 * data.dbg_loop_velocities_count);
 
 	return static_cast<int>(size);
 }
@@ -59,24 +57,15 @@ PackedByteArray DebugPlayerState::serialize() const {
 
 
 bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
-	// Minimum size: fixed header without any array elements
-	size_t min_size =
-		4 +          // dbg_run_tick
-		(24 * 3) +   // positions
-		4 +          // loop_positions count
-		24 +         // dbg_start_tick_vel
-		1 + 8 + 24 + // accel fields
-		4;           // loop_velocities count
-
-	if (bytes.size() < static_cast<int64_t>(min_size)) {
+	// Use the minimum size constant from POD
+	if (bytes.size() < static_cast<int64_t>(DebugPlayerStatePOD::MIN_SERIALIZED_SIZE)) {
 		return false;
 	}
 
 	size_t offset = 0;
 
-	// Fixed fields
+	// Fixed fields (HEADER_PART1)
 	data.dbg_run_tick = BinarySerializer::read_u32(bytes, offset);
-
 	data.dbg_start_tick_pos = BinarySerializer::read_vec3_f64(bytes, offset);
 	data.dbg_post_grounddetect_pos = BinarySerializer::read_vec3_f64(bytes, offset);
 
@@ -87,14 +76,14 @@ bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
 	}
 	data.dbg_loop_positions_count = positions_count;
 	for (uint32_t i = 0; i < positions_count; ++i) {
-		if (offset + 24 > static_cast<size_t>(bytes.size())) {
+		if (offset + SerializedSize::VEC3 > static_cast<size_t>(bytes.size())) {
 			return false;
 		}
 		data.dbg_loop_positions[i] = BinarySerializer::read_vec3_f64(bytes, offset);
 	}
 
+	// Fixed fields (HEADER_PART2)
 	data.dbg_end_tick_pos = BinarySerializer::read_vec3_f64(bytes, offset);
-
 	data.dbg_start_tick_vel = BinarySerializer::read_vec3_f64(bytes, offset);
 	data.dbg_accel_type = BinarySerializer::read_u8(bytes, offset);
 	data.dbg_accel_out = BinarySerializer::read_f64(bytes, offset);
@@ -107,7 +96,7 @@ bool DebugPlayerState::deserialize(const PackedByteArray& bytes) {
 	}
 	data.dbg_loop_velocities_count = velocities_count;
 	for (uint32_t i = 0; i < velocities_count; ++i) {
-		if (offset + 24 > static_cast<size_t>(bytes.size())) {
+		if (offset + SerializedSize::VEC3 > static_cast<size_t>(bytes.size())) {
 			return false;
 		}
 		data.dbg_loop_velocities[i] = BinarySerializer::read_vec3_f64(bytes, offset);

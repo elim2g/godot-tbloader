@@ -7,6 +7,8 @@
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
+#include "serialization_helpers.h"
+
 using namespace godot;
 
 /**
@@ -50,18 +52,36 @@ struct TntPlayerStatePOD {
 	double crouchslide_transition_remaining_s;    // 8 bytes: transition fade time remaining
 
 	// ========================================================================
-	// Timing/Physics (24 bytes)
+	// Timing/Physics
 	// ========================================================================
 
-	double hangtime_duration_s;                   // 8 bytes: air time counter
-	double doublejump_window_remaining_s;         // 8 bytes: time to perform double jump
-	double _padding1;                             // 8 bytes: reserved for future use
+	double hangtime_duration_s;                   // air time counter
+	double doublejump_window_remaining_s;         // time to perform double jump
+	double _padding1;                             // reserved for future use
 
 	// ========================================================================
-	// Total: 129 bytes (16+1 + 4+4+24+24 + 1+24+1+8+8 + 8+8 = 129)
+	// Serialized size computed from field types (auto-updates if fields change)
 	// ========================================================================
 
-	static constexpr size_t SERIALIZED_SIZE = 129;
+	static constexpr size_t SERIALIZED_SIZE =
+		// Inputs
+		SerializedSize::VEC2 +  // look_direction
+		SerializedSize::U8 +    // pressed_keys
+		// Movement state
+		SerializedSize::U32 +   // run_tick
+		SerializedSize::U32 +   // run_started_tick
+		SerializedSize::VEC3 +  // position
+		SerializedSize::VEC3 +  // velocity
+		// Ground state
+		SerializedSize::U8 +    // state_flags
+		SerializedSize::VEC3 +  // ground_normal
+		SerializedSize::U8 +    // num_ticks_grounded
+		SerializedSize::F64 +   // crouchslide_duration_remaining_s
+		SerializedSize::F64 +   // crouchslide_transition_remaining_s
+		// Timing/Physics
+		SerializedSize::F64 +   // hangtime_duration_s
+		SerializedSize::F64;    // doublejump_window_remaining_s
+		// Note: _padding1 is NOT serialized (internal field only)
 };
 
 /**

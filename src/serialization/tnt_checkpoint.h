@@ -5,6 +5,8 @@
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 
+#include "serialization_helpers.h"
+
 using namespace godot;
 
 /**
@@ -15,13 +17,13 @@ using namespace godot;
  * the tick at which it was crossed.
  */
 struct TntCheckpointPOD {
-	uint8_t checkpoint_id;   // 1 byte: checkpoint identifier (0-255)
-	int32_t tick_achieved;   // 4 bytes: tick number when crossed
+	uint8_t checkpoint_id;   // checkpoint identifier (0-255)
+	int32_t tick_achieved;   // tick number when crossed
 
-	static constexpr size_t SERIALIZED_SIZE = 5;
-
-	static_assert(sizeof(uint8_t) == 1, "uint8_t size check");
-	static_assert(sizeof(int32_t) == 4, "int32_t size check");
+	// Serialized size computed from field types (auto-updates if fields change)
+	static constexpr size_t SERIALIZED_SIZE =
+		SerializedSize::U8 +   // checkpoint_id
+		SerializedSize::I32;   // tick_achieved
 };
 
 /**

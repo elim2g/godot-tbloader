@@ -6,6 +6,8 @@
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 
+#include "../serialization/serialization_helpers.h"
+
 using namespace godot;
 
 /**
@@ -19,12 +21,18 @@ using namespace godot;
  * [timestamp: 4 bytes][username_length: 2 bytes][message_length: 2 bytes][message_type: 1 byte][username][message]
  */
 struct ChatMessagePOD {
-	uint32_t timestamp;           // 4 bytes: Unix timestamp
-	uint16_t username_length;     // 2 bytes: Username byte count (1-64)
-	uint16_t message_length;      // 2 bytes: Message byte count (1-512)
-	uint8_t message_type;         // 1 byte: 0=chat, 1=system, 2=whisper
+	uint32_t timestamp;           // Unix timestamp
+	uint16_t username_length;     // Username byte count (1-64)
+	uint16_t message_length;      // Message byte count (1-512)
+	uint8_t message_type;         // 0=chat, 1=system, 2=whisper
 
-	static constexpr size_t HEADER_SIZE = 9;
+	// Size constants computed from field types (auto-updates if fields change)
+	static constexpr size_t HEADER_SIZE =
+		SerializedSize::U32 +     // timestamp
+		SerializedSize::U16 +     // username_length
+		SerializedSize::U16 +     // message_length
+		SerializedSize::U8;       // message_type
+
 	static constexpr size_t MAX_USERNAME_LENGTH = 64;
 	static constexpr size_t MAX_MESSAGE_LENGTH = 512;
 	static constexpr size_t MAX_TOTAL_SIZE = HEADER_SIZE + MAX_USERNAME_LENGTH + MAX_MESSAGE_LENGTH;
