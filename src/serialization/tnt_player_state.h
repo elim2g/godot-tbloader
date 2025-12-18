@@ -13,7 +13,7 @@ using namespace godot;
 
 /**
  * @struct TntPlayerStatePOD
- * @brief Plain Old Data struct for player state serialization (129 bytes fixed).
+ * @brief Plain Old Data struct for player state serialization (131 bytes fixed).
  *
  * Stores the complete player physics state at a single game tick, including:
  * - Input state: look direction and pressed keys
@@ -137,7 +137,7 @@ public:
 
 	/**
 	 * Get the serialized size of player state.
-	 * @return 129 bytes (compile-time constant)
+	 * @return 131 bytes (compile-time constant)
 	 */
 	static int get_serialized_size() {
 		return static_cast<int>(TntPlayerStatePOD::SERIALIZED_SIZE);
@@ -145,13 +145,13 @@ public:
 
 	/**
 	 * Serialize this player state to a byte array.
-	 * @return PackedByteArray containing serialized data (129 bytes)
+	 * @return PackedByteArray containing serialized data (131 bytes)
 	 */
 	PackedByteArray serialize() const;
 
 	/**
 	 * Deserialize player state from a byte array.
-	 * @param bytes The byte array to deserialize from (must be at least 129 bytes)
+	 * @param bytes The byte array to deserialize from (must be at least 131 bytes)
 	 * @return True if deserialization succeeded, false if array is too small
 	 */
 	bool deserialize(const PackedByteArray& bytes);

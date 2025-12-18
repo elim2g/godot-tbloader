@@ -14,7 +14,6 @@
 
 #include <turnt_loader.h>
 #include <scoped_timer.h>
-#include <material_slot_map.h>
 
 Builder::Builder(TurntLoader* loader)
 {
@@ -513,7 +512,6 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	String instance_name = String("entity_{0}_geometry").format(Array::make(idx));
 
 	auto mesh_instance = memnew(MeshInstance3D());
-	auto material_slot_map = memnew(MaterialSlotMap());
 
 	parent->add_child(mesh_instance);
 
@@ -521,7 +519,6 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 	mesh_instance->set_layer_mask(m_loader->get_visual_layer_mask());
 	mesh_instance->set_owner(m_loader->get_owner());
 	mesh_instance->set_name(instance_name);
-	mesh_instance->add_child(material_slot_map);
 
 	// Create mesh
 	Ref<ArrayMesh> mesh = memnew(ArrayMesh());
@@ -612,9 +609,8 @@ MeshInstance3D* Builder::build_entity_mesh(int idx, LMEntity& ent, Node3D* paren
 			if (material != nullptr) {
 				mesh->surface_set_material(surf_idx, material);
 			}
-			// Map the surface index to the texture name so it can be changed programmatically at runtime
+			// Store texture name in surface for runtime material reassignment
 			mesh->surface_set_name(surf_idx, tex.name);
-			material_slot_map->add_slot(tex.name);
 		}
 		}
 	}
