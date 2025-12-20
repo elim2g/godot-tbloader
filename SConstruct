@@ -32,7 +32,7 @@ plat = env["platform"]
 if plat == "windows":
 	env.Append(LIBS=["Advapi32"])
 
-elif plat == "osx":
+elif plat == "macos":
 	env.Append(LINKFLAGS=["-framework", "Security", "-framework", "CoreFoundation"])
 
 # libsecret-1-dev libsecret-devel
@@ -46,19 +46,11 @@ elif plat == "linux":
 if env["platform"] == "windows" and env["target"] == "template_debug":
 	env.Append(LINKFLAGS=["/DEBUG"])
 
-if env["platform"] == "osx":
-	library = env.SharedLibrary(
-		"addons/libturnt/bin/libturnt.{}.framework/libturnt.{}".format(
-			env["platform"], env["platform"]
-		),
-		source=sources,
-	)
-else:
-	library = env.SharedLibrary(
-		"addons/libturnt/bin/libturnt.{}.{}{}".format(
-			env["platform"], env["arch"], env["SHLIBSUFFIX"]
-		),
-		source=sources,
-	)
+library = env.SharedLibrary(
+	"addons/libturnt/bin/libturnt.{}.{}{}".format(
+		env["platform"], env["arch"], env["SHLIBSUFFIX"]
+	),
+	source=sources,
+)
 
 Default(library)
