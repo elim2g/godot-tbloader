@@ -18,6 +18,7 @@ PackedByteArray TntPlayerState::serialize() const {
 	// Movement state
 	BinarySerializer::write_u32(bytes, offset, data.run_tick);
 	BinarySerializer::write_u32(bytes, offset, data.run_started_tick);
+	BinarySerializer::write_u32(bytes, offset, data.run_finished_tick);
 	BinarySerializer::write_vec3_f64(bytes, offset, data.position);
 	BinarySerializer::write_vec3_f64(bytes, offset, data.velocity);
 
@@ -51,6 +52,7 @@ bool TntPlayerState::deserialize(const PackedByteArray& bytes) {
 	// Movement state
 	data.run_tick = BinarySerializer::read_u32(bytes, offset);
 	data.run_started_tick = BinarySerializer::read_u32(bytes, offset);
+	data.run_finished_tick = BinarySerializer::read_u32(bytes, offset);
 	data.position = BinarySerializer::read_vec3_f64(bytes, offset);
 	data.velocity = BinarySerializer::read_vec3_f64(bytes, offset);
 
@@ -172,6 +174,10 @@ void TntPlayerState::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_run_started_tick", "value"), &TntPlayerState::set_run_started_tick);
 	ClassDB::bind_method(D_METHOD("get_run_started_tick"), &TntPlayerState::get_run_started_tick);
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "run_started_tick"), "set_run_started_tick", "get_run_started_tick");
+
+	ClassDB::bind_method(D_METHOD("set_run_finished_tick", "value"), &TntPlayerState::set_run_finished_tick);
+	ClassDB::bind_method(D_METHOD("get_run_finished_tick"), &TntPlayerState::get_run_finished_tick);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "run_finished_tick"), "set_run_finished_tick", "get_run_finished_tick");
 
 	ClassDB::bind_method(D_METHOD("set_position", "value"), &TntPlayerState::set_position);
 	ClassDB::bind_method(D_METHOD("get_position"), &TntPlayerState::get_position);

@@ -13,7 +13,7 @@ using namespace godot;
 
 /**
  * @struct TntPlayerStatePOD
- * @brief Plain Old Data struct for player state serialization (131 bytes fixed).
+ * @brief Plain Old Data struct for player state serialization.
  *
  * Stores the complete player physics state at a single game tick, including:
  * - Input state: look direction and pressed keys
@@ -22,6 +22,7 @@ using namespace godot;
  * - Timing: jump window, hangtime, etc.
  *
  * This is the hot path for demo recording (serialized every tick at 125Hz).
+ * See SERIALIZED_SIZE for the computed size.
  */
 struct TntPlayerStatePOD {
 	// ========================================================================
@@ -32,13 +33,14 @@ struct TntPlayerStatePOD {
 	uint8_t pressed_keys;      // 1 byte: bit flags for F, L, R, B, J, C, S keys
 
 	// ========================================================================
-	// Movement State (52 bytes)
+	// Movement State (56 bytes)
 	// ========================================================================
 
-	uint32_t run_tick;         // 4 bytes: current tick counter
-	uint32_t run_started_tick; // 4 bytes: tick when run started (-1 if not started)
-	Vector3 position;          // 24 bytes: world position (3xf64)
-	Vector3 velocity;          // 24 bytes: world velocity (3xf64)
+	uint32_t run_tick;          // 4 bytes: current tick counter
+	uint32_t run_started_tick;  // 4 bytes: tick when run started (-1 if not started)
+	uint32_t run_finished_tick; // 4 bytes: tick when run finished (-1 if not finished)
+	Vector3 position;           // 24 bytes: world position (3xf64)
+	Vector3 velocity;           // 24 bytes: world velocity (3xf64)
 
 	// ========================================================================
 	// Ground State (50 bytes)
@@ -70,6 +72,7 @@ struct TntPlayerStatePOD {
 		// Movement state
 		SerializedSize::U32 +   // run_tick
 		SerializedSize::U32 +   // run_started_tick
+		SerializedSize::U32 +   // run_finished_tick
 		SerializedSize::VEC3 +  // position
 		SerializedSize::VEC3 +  // velocity
 		// Ground state
@@ -137,7 +140,7 @@ public:
 
 	/**
 	 * Get the serialized size of player state.
-	 * @return 131 bytes (compile-time constant)
+	 * @return Compile-time constant size in bytes
 	 */
 	static int get_serialized_size() {
 		return static_cast<int>(TntPlayerStatePOD::SERIALIZED_SIZE);
@@ -145,13 +148,13 @@ public:
 
 	/**
 	 * Serialize this player state to a byte array.
-	 * @return PackedByteArray containing serialized data (131 bytes)
+	 * @return PackedByteArray containing serialized data (SERIALIZED_SIZE bytes)
 	 */
 	PackedByteArray serialize() const;
 
 	/**
 	 * Deserialize player state from a byte array.
-	 * @param bytes The byte array to deserialize from (must be at least 131 bytes)
+	 * @param bytes The byte array to deserialize from (must be at least SERIALIZED_SIZE bytes)
 	 * @return True if deserialization succeeded, false if array is too small
 	 */
 	bool deserialize(const PackedByteArray& bytes);
@@ -241,6 +244,11 @@ public:
 		if (data.run_started_tick == static_cast<uint32_t>(-1)) {
 			return 0;
 		}
+		// If the run is finished, return the final time
+		if (data.run_finished_tick != static_cast<uint32_t>(-1)) {
+			return static_cast<int>(data.run_finished_tick - data.run_started_tick);
+		}
+		// Otherwise return time since start
 		return static_cast<int>(data.run_tick - data.run_started_tick);
 	}
 
@@ -259,6 +267,9 @@ public:
 
 	void set_run_started_tick(int value) { data.run_started_tick = static_cast<uint32_t>(value); }
 	int get_run_started_tick() const { return static_cast<int>(data.run_started_tick); }
+
+	void set_run_finished_tick(int value) { data.run_finished_tick = static_cast<uint32_t>(value); }
+	int get_run_finished_tick() const { return static_cast<int>(data.run_finished_tick); }
 
 	void set_position(const Vector3& value) { data.position = value; }
 	Vector3 get_position() const { return data.position; }
