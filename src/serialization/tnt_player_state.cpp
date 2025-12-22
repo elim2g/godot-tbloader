@@ -215,6 +215,9 @@ void TntPlayerState::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_doublejump_window_remaining_s"), &TntPlayerState::get_doublejump_window_remaining_s);
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "doublejump_window_remaining_s"), "set_doublejump_window_remaining_s", "get_doublejump_window_remaining_s");
 
+	ClassDB::bind_method(D_METHOD("has_run_started"), &TntPlayerState::has_run_started);
+	ClassDB::bind_method(D_METHOD("has_run_finished"), &TntPlayerState::has_run_finished);
+
 	// Constants - Serialization
 	BIND_CONSTANT(SERIALIZED_SIZE);
 

@@ -29,37 +29,37 @@ struct TntPlayerStatePOD {
 	// Inputs (17 bytes)
 	// ========================================================================
 
-	Vector2 look_direction;    // 16 bytes: x=yaw angle, y=pitch angle (both f64)
-	uint8_t pressed_keys;      // 1 byte: bit flags for F, L, R, B, J, C, S keys
+	Vector2 look_direction = Vector2(0.f, 0.f); // 16 bytes: x=yaw angle, y=pitch angle (both f64)
+	uint8_t pressed_keys = 0;      				// 1 byte: bit flags for F, L, R, B, J, C, S keys
 
 	// ========================================================================
 	// Movement State (56 bytes)
 	// ========================================================================
 
-	uint32_t run_tick;          // 4 bytes: current tick counter
-	uint32_t run_started_tick;  // 4 bytes: tick when run started (-1 if not started)
-	uint32_t run_finished_tick; // 4 bytes: tick when run finished (-1 if not finished)
-	Vector3 position;           // 24 bytes: world position (3xf64)
-	Vector3 velocity;           // 24 bytes: world velocity (3xf64)
+	uint32_t run_tick = 0;          			// 4 bytes: current tick counter
+	uint32_t run_started_tick = 0;  			// 4 bytes: tick when run started (0 if not started, ensure this is at least 1 when assigning)
+	uint32_t run_finished_tick = 0; 			// 4 bytes: tick when run finished (0 if not finished)
+	Vector3 position = Vector3(0.f, 0.f, 0.f);  // 24 bytes: world position (3xf64)
+	Vector3 velocity = Vector3(0.f, 0.f, 0.f);  // 24 bytes: world velocity (3xf64)
 
 	// ========================================================================
 	// Ground State (50 bytes)
 	// ========================================================================
 
-	uint8_t state_flags;       // 1 byte: grounded, crouched, crouchsliding flags
-	Vector3 ground_normal;     // 24 bytes: surface normal of ground contact (3xf64)
-	uint8_t num_ticks_grounded; // 1 byte: how many ticks player has been grounded
+	uint8_t state_flags = 0;       					// 1 byte: grounded, crouched, crouchsliding flags
+	Vector3 ground_normal = Vector3(0.f, 0.f, 0.f);	// 24 bytes: surface normal of ground contact (3xf64)
+	uint8_t num_ticks_grounded = 0; 				// 1 byte: how many ticks player has been grounded
 
-	double crouchslide_duration_remaining_s;      // 8 bytes: time left in crouch slide
-	double crouchslide_transition_remaining_s;    // 8 bytes: transition fade time remaining
+	double crouchslide_duration_remaining_s = 0.f;  	// 8 bytes: time left in crouch slide
+	double crouchslide_transition_remaining_s = 0.f;	// 8 bytes: transition fade time remaining
 
 	// ========================================================================
 	// Timing/Physics
 	// ========================================================================
 
-	double hangtime_duration_s;                   // air time counter
-	double doublejump_window_remaining_s;         // time to perform double jump
-	double _padding1;                             // reserved for future use
+	double hangtime_duration_s = 0.f;                   // air time counter
+	double doublejump_window_remaining_s = 0.f;         // time to perform double jump
+	double _padding1 = 0.f;                             // reserved for future use
 
 	// ========================================================================
 	// Serialized size computed from field types (auto-updates if fields change)
@@ -129,7 +129,7 @@ public:
 	static constexpr int F_IS_CROUCHSLIDING = (1 << F_IS_CROUCHSLIDING_IDX);
 
 	// The actual data
-	TntPlayerStatePOD data{};
+	TntPlayerStatePOD data = {};
 
 	TntPlayerState() = default;
 	~TntPlayerState() = default;
@@ -241,11 +241,11 @@ public:
 	}
 
 	int get_active_run_time_ticks() const {
-		if (data.run_started_tick == static_cast<uint32_t>(-1)) {
+		if (data.run_started_tick == 0) {
 			return 0;
 		}
 		// If the run is finished, return the final time
-		if (data.run_finished_tick != static_cast<uint32_t>(-1)) {
+		if (data.run_finished_tick != 0) {
 			return static_cast<int>(data.run_finished_tick - data.run_started_tick);
 		}
 		// Otherwise return time since start
@@ -297,6 +297,9 @@ public:
 
 	void set_doublejump_window_remaining_s(double value) { data.doublejump_window_remaining_s = value; }
 	double get_doublejump_window_remaining_s() const { return data.doublejump_window_remaining_s; }
+
+	bool has_run_started() const { return data.run_started_tick != 0; }
+	bool has_run_finished() const { return data.run_finished_tick != 0; }
 
 protected:
 	static void _bind_methods();
